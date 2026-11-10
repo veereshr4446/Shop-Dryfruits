@@ -32,12 +32,34 @@ button{font:inherit;font-weight:800;border:0;border-radius:12px;padding:14px 18p
 .err{color:var(--red)}
 .hint{font-size:.9rem;opacity:.75}
 input[type=file]{display:none}
+
+.done{position:fixed;inset:0;background:#1fa855;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:50;text-align:center;padding:24px}
+.done.show{display:flex}
+.done .ring{width:150px;height:150px;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+.done circle{fill:#fff;stroke:none}
+.done .tick{fill:none;stroke:#1fa855;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:70;stroke-dashoffset:70;animation:draw .45s .35s ease forwards}
+.done h2{font-size:2.4rem;margin:14px 0 0;font-weight:800}
+.done p{margin:0;font-size:1.1rem;opacity:.95}
+.done .t{font-size:.95rem;opacity:.85}
+.done .btns{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap;justify-content:center}
+.done a,.done button{background:#fff;color:#12703a;font:inherit;font-weight:800;border:0;border-radius:12px;padding:14px 22px;text-decoration:none;cursor:pointer}
+.done button{background:transparent;color:#fff;border:2px solid #fff}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.done .ring{animation:none}.done .tick{animation:none;stroke-dashoffset:0}}
 </style>
 </head>
 <body>
 <header>Update prices and photos</header>
 <main id="app"></main>
 <div class="bar" id="bar" hidden><p class="msg" id="msg"></p><button class="save" id="save">Save changes</button></div>
+<div class="done" id="done" role="status" aria-live="polite">
+  <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/><path class="tick" d="M28 52 L44 67 L73 35"/></svg>
+  <h2>Done</h2>
+  <p>Prices and photos updated</p>
+  <p class="t" id="dtime"></p>
+  <div class="btns"><a href="/" target="_blank" rel="noopener">View website</a><button id="dok">OK</button></div>
+</div>
 <script>
 const $=id=>document.getElementById(id), app=$('app');
 let data=null, removed=[];
@@ -64,6 +86,13 @@ async function load(){
 function render(){
   $('bar').hidden=false; msg('');
   app.innerHTML='';
+  data.shop=data.shop||{};
+  const sc=document.createElement('div');sc.className='card';
+  sc.innerHTML='<label style="margin-top:0" for="sn">Shop heading</label><input id="sn" type="text" maxlength="80"><label for="st">Small line under heading</label><input id="st" type="text" maxlength="120">';
+  const sn=sc.querySelector('#sn'),st=sc.querySelector('#st');
+  sn.value=data.shop.name||'';st.value=data.shop.tagline||'';
+  sn.oninput=()=>data.shop.name=sn.value;st.oninput=()=>data.shop.tagline=st.value;
+  app.appendChild(sc);
   data.items.forEach((it,i)=>{
     const c=document.createElement('div');c.className='card';
     const src=it.newImage||it.preview||(it.image?it.image+'?t='+Date.now():'');
@@ -83,6 +112,13 @@ function render(){
   app.appendChild(add);
 }
 function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8));URL.revokeObjectURL(u);};im.src=u;});}
+function showDone(){
+  $('dtime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+  $('done').classList.add('show');
+  try{navigator.vibrate&&navigator.vibrate([60,40,60]);}catch(e){}
+  $('dok').focus();
+}
+$('dok').onclick=()=>{$('done').classList.remove('show');window.scrollTo(0,0);};
 $('save').onclick=async()=>{
   const b=$('save');b.disabled=true;msg('Saving... please wait');
   try{
@@ -94,8 +130,8 @@ $('save').onclick=async()=>{
         it.image=r.url;it.preview=it.newImage;delete it.newImage;
       }
     }
-    await call({action:'save',items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
-    removed=[];render();msg('Saved! The website is updated.');
+    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline},items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
+    removed=[];render();msg('Saved! The website is updated.');showDone();
   }catch(e){
     if(e.status===401){login('Please enter the password again.');}
     else msg('Could not save ('+e.message+'). Try again.',true);

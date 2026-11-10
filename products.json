@@ -1,8 +1,16 @@
 {
-  "shop": { "name": "Kishmish Shop", "tagline": "Fresh kishmish, priced weekly", "whatsapp": "917813834446" },
+  "shop": {
+    "name": "Kissan Cold Storage, Vijayapura",
+    "tagline": "Fresh Kishmish • Direct from Cold Storage",
+    "whatsapp": "917813834446",
+    "contacts": [
+      { "name": "Nagaraj", "role": "Seller", "phone": "7813834446" },
+      { "name": "Mustak", "role": "Owner", "phone": "9901114176" }
+    ]
+  },
   "updated": "",
   "items": [
-    { "id": "sample1", "name": "Green Kishmish (Indian)", "price": 280, "unit": "kg", "image": "" },
-    { "id": "sample2", "name": "Golden Kishmish", "price": 320, "unit": "kg", "image": "" }
+    { "id": "sample1", "name": "Green Kishmish (Indian)", "price": 280, "unit": "kg", "image": "", "images": [] },
+    { "id": "sample2", "name": "Golden Kishmish", "price": 320, "unit": "kg", "image": "", "images": [] }
   ]
 }

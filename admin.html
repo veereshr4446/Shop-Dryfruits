@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex">
 <title>Update prices</title>
 <style>
-:root{--grape:#3b2149;--gold:#e3a72f;--paper:#f4f3ec;--ink:#1e1a22;--card:#fff;--line:#d9d6c7;--red:#b3261e}
-@media (prefers-color-scheme:dark){:root{--paper:#17121c;--ink:#f2eef5;--card:#241b2d;--line:#3a2d46}}
+:root{--grape:#4a2a14;--gold:#e3a72f;--paper:#f4f3ec;--ink:#1e1a22;--card:#fff;--line:#d9d6c7;--red:#b3261e}
+@media (prefers-color-scheme:dark){:root{--paper:#1a120b;--ink:#f2eef5;--card:#2a1c11;--line:#4a3220}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{background:var(--grape);color:#fff;padding:18px 16px;font-weight:800;font-size:1.3rem}
@@ -47,6 +47,11 @@ input[type=file]{display:none}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){.done .ring{animation:none}.done .tick{animation:none;stroke-dashoffset:0}}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.strip.none{opacity:.7;font-size:.95rem}
+.st{position:relative;flex:none;width:84px;height:84px;border-radius:10px;overflow:hidden;background:#cfc}
+.st img{width:100%;height:100%;object-fit:cover;display:block}
+.st button{position:absolute;top:3px;right:3px;width:30px;height:30px;border-radius:50%;padding:0;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;line-height:1}
 </style>
 </head>
 <body>
@@ -97,21 +102,32 @@ function render(){
   sn.oninput=()=>data.shop.name=sn.value;st.oninput=()=>data.shop.tagline=st.value;
   app.appendChild(sc);
   data.items.forEach((it,i)=>{
+    it.images=it.images||(it.image?[it.image]:[]);it.pending=it.pending||[];
+    const total=()=>it.images.length+it.pending.length;
     const c=document.createElement('div');c.className='card';
-    const src=it.newImage||it.preview||(it.image?it.image+'?t='+Date.now():'');
-    c.innerHTML=`<div class="row"><div class="thumb">${src?'':'🍇'}</div><div style="flex:1"><label style="margin-top:0">Name</label><input type="text"></div></div>
+    c.innerHTML=`<label style="margin-top:0">Name</label><input type="text">
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
-    <div class="row" style="margin-top:12px;justify-content:space-between"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">Change photo<input type="file" accept="image/*"></label><button class="del">Delete</button></div>`;
-    if(src){const im=document.createElement('img');im.src=src;im.alt='';c.querySelector('.thumb').appendChild(im);}
+    <label>Photos (${total()} of 6)</label><div class="strip"></div>
+    <div class="row" style="margin-top:12px;justify-content:space-between"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos<input type="file" accept="image/*" multiple></label><button class="del">Delete item</button></div>`;
+    const strip=c.querySelector('.strip');
+    const thumb=(src,onx)=>{const t=document.createElement('div');t.className='st';const im=document.createElement('img');im.src=src;im.alt='';const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove photo');x.onclick=onx;t.append(im,x);strip.appendChild(t);};
+    it.images.forEach((u,k)=>thumb(u,()=>{removed.push(u);it.images.splice(k,1);render();}));
+    it.pending.forEach((u,k)=>thumb(u,()=>{it.pending.splice(k,1);render();}));
+    if(!total()){strip.className='strip none';strip.textContent='🍇 No photos yet';}
     const [nm,pr]=c.querySelectorAll('input[type=text],input[type=number]');
     nm.value=it.name;pr.value=it.price;
     nm.oninput=()=>it.name=nm.value; pr.oninput=()=>it.price=Number(pr.value);
-    c.querySelector('input[type=file]').onchange=async e=>{if(e.target.files[0]){it.newImage=await shrink(e.target.files[0]);render();}};
-    c.querySelector('.del').onclick=()=>{if(confirm('Delete '+it.name+'?')){if(it.image)removed.push(it.image);data.items.splice(i,1);render();}};
+    c.querySelector('input[type=file]').onchange=async e=>{
+      const room=6-total(),files=[...e.target.files];
+      if(files.length>room)alert('Only 6 photos per item. Extra photos were skipped.');
+      for(const f of files.slice(0,Math.max(room,0)))it.pending.push(await shrink(f));
+      render();
+    };
+    c.querySelector('.del').onclick=()=>{if(confirm('Delete '+it.name+'?')){it.images.forEach(u=>removed.push(u));data.items.splice(i,1);render();}};
     app.appendChild(c);
   });
   const add=document.createElement('button');add.className='add';add.textContent='+ Add new item';
-  add.onclick=()=>{data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',image:''});render();window.scrollTo(0,document.body.scrollHeight)};
+  add.onclick=()=>{data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
   app.appendChild(add);
 }
 function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8));URL.revokeObjectURL(u);};im.src=u;});}
@@ -126,14 +142,15 @@ $('save').onclick=async()=>{
   const b=$('save');b.disabled=true;msg('Saving... please wait');
   try{
     for(const it of data.items){
-      if(it.newImage){
-        const name=it.id.replace(/[^\w-]/g,'')+'-'+Date.now()+'.jpg';
-        const r=await call({action:'image',name,content:it.newImage.split(',')[1]});
-        if(it.image)removed.push(it.image);
-        it.image=r.url;it.preview=it.newImage;delete it.newImage;
+      let k=0;
+      for(const du of (it.pending||[])){
+        const name=it.id.replace(/[^\w-]/g,'')+'-'+Date.now()+'-'+(k++)+'.jpg';
+        const r=await call({action:'image',name,content:du.split(',')[1]});
+        it.images.push(r.url);
       }
+      it.pending=[];
     }
-    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline,whatsapp:(data.shop||{}).whatsapp},items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
+    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline,whatsapp:(data.shop||{}).whatsapp},items:data.items.map(({id,name,price,unit,images})=>({id,name,price,unit,images})),removed});
     removed=[];render();msg('Saved! The website is updated.');showDone();
   }catch(e){
     if(e.status===401){login('Please enter the password again.');}

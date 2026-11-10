@@ -3,43 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kishmish Shop</title>
+<title>Kissan Cold Storage</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
-:root{--grape:#3b2149;--gold:#e3a72f;--leaf:#6f8a1f;--paper:#fafaf5;--ink:#1e1a22;--card:#fff;--line:#e6e3d6}
-:root[data-theme=dark]{--paper:#17121c;--ink:#f2eef5;--card:#241b2d;--line:#3a2d46;color-scheme:dark}
-.theme{position:absolute;top:12px;right:12px;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);color:#fff;font-size:1.3rem;cursor:pointer;display:grid;place-items:center}
-.theme:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+:root{--wood:#4a2a14;--wood2:#6b3f1f;--gold:#f2c14e;--leaf:#2f7a24;--leafd:#1f4d22;--cream:#fbf3d6;
+  --paper:#fbf6e6;--ink:#2b1c10;--card:#fffdf6;--line:#e8dcb8;--price:#2f7a24}
+:root[data-theme=dark]{--paper:#1a120b;--ink:#f6ecd2;--card:#2a1c11;--line:#4a3220;--price:#9ad46a;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{position:relative;background:var(--grape);color:#fff;padding:36px 20px 44px;text-align:center}
-h1{font:800 clamp(2.2rem,8vw,3.6rem)/1.05 "Baloo 2",system-ui,sans-serif;margin:0}
-header p{margin:8px 0 0;color:#e9dcf0}
-.upd{display:inline-block;margin-top:16px;background:var(--gold);color:#2a1a00;font-weight:700;padding:6px 14px;border-radius:99px;font-size:.9rem}
-main{max-width:1000px;margin:0 auto;padding:24px 16px 100px}
+.bar{position:sticky;top:0;z-index:20;background:var(--wood);color:var(--cream);display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:3px solid var(--gold)}
+.contacts{flex:1;display:flex;flex-wrap:wrap;gap:4px 18px;justify-content:center;font-size:.95rem}
+.contacts a{color:var(--cream);text-decoration:none;font-weight:600;white-space:nowrap}
+.contacts b{color:var(--gold);font-weight:800;letter-spacing:.3px}
+.contacts a:focus-visible,.theme:focus-visible,.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.theme{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--cream);font-size:1.15rem;cursor:pointer;display:grid;place-items:center}
+.banner{display:block;width:100%;height:auto;background:var(--wood2)}
+.head{text-align:center;padding:18px 16px 4px}
+h1{font:800 clamp(1.5rem,5.5vw,2.2rem)/1.15 "Baloo 2",system-ui,sans-serif;margin:0;color:var(--wood)}
+:root[data-theme=dark] h1{color:var(--gold)}
+.tag{margin:4px 0 0;opacity:.8}
+.upd{display:inline-block;margin-top:10px;background:var(--gold);color:#3a2400;font-weight:700;padding:5px 14px;border-radius:99px;font-size:.9rem}
+main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-.ph{aspect-ratio:1/1;background:linear-gradient(135deg,#d8c46a,#9bb04a);display:grid;place-items:center;font-size:3rem}
-.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph{position:relative;aspect-ratio:1/1;background:linear-gradient(135deg,#e6c85e,#8fae4a)}
+.ph.empty{display:grid;place-items:center;font-size:3rem}
+.slides{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.slides::-webkit-scrollbar{display:none}
+.slides img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center;display:block}
+.dots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 2px rgba(0,0,0,.5)}
+.dots i.on{background:#fff;transform:scale(1.25)}
+.cnt{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;font-weight:700;padding:2px 8px;border-radius:99px}
 .info{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
 .name{font-weight:700}
-.price{font:800 1.7rem "Baloo 2",system-ui,sans-serif;color:var(--leaf)}
+.price{font:800 1.7rem "Baloo 2",system-ui,sans-serif;color:var(--price)}
 .price small{font-size:.9rem;font-weight:600;color:inherit;opacity:.8}
-.order{margin-top:auto;display:block;text-align:center;background:var(--grape);color:#fff;text-decoration:none;font-weight:700;padding:11px;border-radius:10px}
-.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.empty{text-align:center;padding:60px 0;opacity:.7}
-.fab{position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:auto;background:#1fa855;color:#fff;text-align:center;font-weight:800;padding:14px;border-radius:14px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.order{margin-top:auto;display:block;text-align:center;background:var(--leafd);color:var(--cream);text-decoration:none;font-weight:700;padding:11px;border-radius:10px;border:2px solid var(--gold)}
+.msg{text-align:center;padding:60px 0;opacity:.7}
+.fab{position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:auto;background:#1fa855;color:#fff;text-align:center;font-weight:800;padding:14px;border-radius:14px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
-<header>
+<div class="bar">
+  <div class="contacts" id="contacts"></div>
   <button class="theme" id="theme" type="button" aria-label="Switch dark or light mode"></button>
-  <h1 id="shop">Kishmish Shop</h1>
-  <p id="tag"></p>
+</div>
+<img class="banner" src="banner.jpg" alt="Kissan Cold Storage, Vijayapura. Fresh Kishmish direct from cold storage." width="1600" height="679">
+<div class="head">
+  <h1 id="shop">Kissan Cold Storage</h1>
+  <p class="tag" id="tag"></p>
   <span class="upd" id="upd" hidden></span>
-</header>
+</div>
 <main>
   <div class="grid" id="grid" aria-live="polite"></div>
 </main>
@@ -55,21 +72,41 @@ main{max-width:1000px;margin:0 auto;padding:24px 16px 100px}
   const $=id=>document.getElementById(id);
   let d;
   try{ try{ d=await (await fetch('/api/products?t='+Date.now())).json(); if(!d.items) throw 0; }catch(_){ d=await (await fetch('products.json?t='+Date.now())).json(); } }
-  catch(e){ $('grid').innerHTML='<p class="empty">Prices will be here soon.</p>'; return; }
+  catch(e){ $('grid').innerHTML='<p class="msg">Prices will be here soon.</p>'; return; }
   const s=d.shop||{};
-  $('shop').textContent=s.name||'Kishmish Shop'; document.title=s.name||'Kishmish Shop';
+  $('shop').textContent=s.name||'Kissan Cold Storage'; document.title=s.name||'Kissan Cold Storage';
   $('tag').textContent=s.tagline||'';
   if(d.updated){ $('upd').hidden=false; $('upd').textContent='Prices updated '+d.updated; }
+  for(const c of (s.contacts||[])){
+    const ph=String(c.phone||'').replace(/\D/g,''); if(!ph) continue;
+    const a=document.createElement('a'); a.href='tel:+91'+ph.slice(-10);
+    a.append('📞 '+c.name+(c.role?' ('+c.role+')':'')+' ');
+    const n=document.createElement('b'); n.textContent=ph; a.appendChild(n);
+    $('contacts').appendChild(a);
+  }
   const num=(s.whatsapp||'').replace(/\D/g,'');
   const link=t=>num&&!/X/i.test(s.whatsapp)?'https://wa.me/'+num+'?text='+encodeURIComponent(t):'';
   if(link('Hello')){ $('wa').hidden=false; $('wa').href=link('Hello, I want to order kishmish.'); }
   const items=d.items||[];
-  if(!items.length){ $('grid').innerHTML='<p class="empty">No items today. Please check back soon.</p>'; return; }
+  if(!items.length){ $('grid').innerHTML='<p class="msg">No items today. Please check back soon.</p>'; return; }
   $('grid').innerHTML='';
   for(const it of items){
+    const imgs=(it.images&&it.images.length)?it.images:(it.image?[it.image]:[]);
     const c=document.createElement('article'); c.className='card';
     const ph=document.createElement('div'); ph.className='ph';
-    if(it.image){ const im=document.createElement('img'); im.src=it.image+'?t='+(d.updated||''); im.alt=it.name; im.loading='lazy'; ph.appendChild(im); } else ph.textContent='🍇';
+    if(!imgs.length){ ph.classList.add('empty'); ph.textContent='🍇'; }
+    else{
+      const sl=document.createElement('div'); sl.className='slides';
+      imgs.forEach((u,k)=>{const im=document.createElement('img'); im.src=u; im.alt=it.name+(imgs.length>1?' photo '+(k+1):''); im.loading='lazy'; sl.appendChild(im);});
+      ph.appendChild(sl);
+      if(imgs.length>1){
+        const dots=document.createElement('div'); dots.className='dots';
+        imgs.forEach((_,k)=>{const i=document.createElement('i'); if(!k)i.className='on'; dots.appendChild(i);});
+        const cnt=document.createElement('span'); cnt.className='cnt'; cnt.textContent='1/'+imgs.length;
+        ph.append(dots,cnt);
+        sl.addEventListener('scroll',()=>{const k=Math.round(sl.scrollLeft/sl.clientWidth);[...dots.children].forEach((x,j)=>x.className=j===k?'on':'');cnt.textContent=(k+1)+'/'+imgs.length;},{passive:true});
+      }
+    }
     const info=document.createElement('div'); info.className='info';
     const n=document.createElement('div'); n.className='name'; n.textContent=it.name;
     const p=document.createElement('div'); p.className='price'; p.textContent='₹'+it.price+' ';

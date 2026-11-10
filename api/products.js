@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
       saved = await (await fetch(h.url + '?t=' + Date.now())).json();
     } catch (e) { /* nothing saved yet */ }
     res.json({
-      shop: base.shop,
+      shop: Object.assign({}, base.shop, saved && saved.shop ? saved.shop : {}),
       updated: saved ? saved.updated : base.updated,
       items: saved ? saved.items : base.items
     });

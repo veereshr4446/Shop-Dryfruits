@@ -53,7 +53,9 @@ module.exports = async (req, res) => {
         image: isBlobUrl(i.image) ? i.image : ''
       }));
       const updated = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
-      await put('products.json', JSON.stringify({ updated, items }), { access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+      const sh = b.shop || {};
+      const shop = { name: String(sh.name || '').trim().slice(0, 80) || 'Kishmish Shop', tagline: String(sh.tagline || '').trim().slice(0, 120) };
+      await put('products.json', JSON.stringify({ updated, shop, items }), { access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
       const gone = (Array.isArray(b.removed) ? b.removed : []).filter(isBlobUrl);
       if (gone.length) { try { await del(gone); } catch (e) {} }
       return res.json({ ok: true });

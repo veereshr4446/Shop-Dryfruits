@@ -1,0 +1,16 @@
+{
+  "id": "./admin.html",
+  "name": "Kissan Cold Storage - Update Prices",
+  "short_name": "Update Prices",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#4a2a14",
+  "theme_color": "#4a2a14",
+  "icons": [
+    { "src": "icons/admin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/admin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/admin-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/admin-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -88,9 +88,12 @@ function render(){
   app.innerHTML='';
   data.shop=data.shop||{};
   const sc=document.createElement('div');sc.className='card';
-  sc.innerHTML='<label style="margin-top:0" for="sn">Shop heading</label><input id="sn" type="text" maxlength="80"><label for="st">Small line under heading</label><input id="st" type="text" maxlength="120">';
+  sc.innerHTML='<label style="margin-top:0" for="sn">Shop heading</label><input id="sn" type="text" maxlength="80"><label for="st">Small line under heading</label><input id="st" type="text" maxlength="120"><label for="sw">WhatsApp number for orders (10 digits)</label><input id="sw" type="tel" inputmode="numeric" maxlength="15">';
   const sn=sc.querySelector('#sn'),st=sc.querySelector('#st');
+  const sw=sc.querySelector('#sw');
   sn.value=data.shop.name||'';st.value=data.shop.tagline||'';
+  let w=String(data.shop.whatsapp||'').replace(/\D/g,'');if(w.length===12&&w.startsWith('91'))w=w.slice(2);sw.value=/X/i.test(String(data.shop.whatsapp||''))?'':w;
+  sw.oninput=()=>data.shop.whatsapp=sw.value;
   sn.oninput=()=>data.shop.name=sn.value;st.oninput=()=>data.shop.tagline=st.value;
   app.appendChild(sc);
   data.items.forEach((it,i)=>{
@@ -130,7 +133,7 @@ $('save').onclick=async()=>{
         it.image=r.url;it.preview=it.newImage;delete it.newImage;
       }
     }
-    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline},items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
+    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline,whatsapp:(data.shop||{}).whatsapp},items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
     removed=[];render();msg('Saved! The website is updated.');showDone();
   }catch(e){
     if(e.status===401){login('Please enter the password again.');}

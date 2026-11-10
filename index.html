@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kishmish Shop</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{--grape:#3b2149;--gold:#e3a72f;--leaf:#6f8a1f;--paper:#fafaf5;--ink:#1e1a22;--card:#fff;--line:#e6e3d6}
-@media (prefers-color-scheme:dark){:root{--paper:#17121c;--ink:#f2eef5;--card:#241b2d;--line:#3a2d46}}
+:root[data-theme=dark]{--paper:#17121c;--ink:#f2eef5;--card:#241b2d;--line:#3a2d46;color-scheme:dark}
+.theme{position:absolute;top:12px;right:12px;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);color:#fff;font-size:1.3rem;cursor:pointer;display:grid;place-items:center}
+.theme:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{background:var(--grape);color:#fff;padding:36px 20px 44px;text-align:center}
+header{position:relative;background:var(--grape);color:#fff;padding:36px 20px 44px;text-align:center}
 h1{font:800 clamp(2.2rem,8vw,3.6rem)/1.05 "Baloo 2",system-ui,sans-serif;margin:0}
 header p{margin:8px 0 0;color:#e9dcf0}
 .upd{display:inline-block;margin-top:16px;background:var(--gold);color:#2a1a00;font-weight:700;padding:6px 14px;border-radius:99px;font-size:.9rem}
@@ -32,6 +35,7 @@ main{max-width:1000px;margin:0 auto;padding:24px 16px 100px}
 </head>
 <body>
 <header>
+  <button class="theme" id="theme" type="button" aria-label="Switch dark or light mode"></button>
   <h1 id="shop">Kishmish Shop</h1>
   <p id="tag"></p>
   <span class="upd" id="upd" hidden></span>
@@ -41,6 +45,12 @@ main{max-width:1000px;margin:0 auto;padding:24px 16px 100px}
 </main>
 <a class="fab" id="wa" href="#" hidden>Order on WhatsApp</a>
 <script>
+(()=>{
+  const r=document.documentElement,b=document.getElementById('theme');
+  const paint=()=>{const d=r.dataset.theme==='dark';b.textContent=d?'☀️':'🌙';b.title=d?'Light mode':'Dark mode';};
+  b.onclick=()=>{r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('theme',r.dataset.theme)}catch(e){}paint();};
+  paint();
+})();
 (async()=>{
   const $=id=>document.getElementById(id);
   let d;

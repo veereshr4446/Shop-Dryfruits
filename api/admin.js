@@ -45,13 +45,17 @@ module.exports = async (req, res) => {
     }
 
     if (b.action === 'save') {
-      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => ({
-        id: String(i.id || '').replace(/[^\w-]/g, '').slice(0, 60) || 'i' + Date.now(),
-        name: String(i.name || '').slice(0, 80),
-        price: Math.max(0, Number(i.price) || 0),
-        unit: String(i.unit || 'kg').slice(0, 10),
-        image: isBlobUrl(i.image) ? i.image : ''
-      }));
+      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => {
+        const imgs = (Array.isArray(i.images) ? i.images : (i.image ? [i.image] : [])).filter(isBlobUrl).slice(0, 6);
+        return {
+          id: String(i.id || '').replace(/[^\w-]/g, '').slice(0, 60) || 'i' + Date.now(),
+          name: String(i.name || '').slice(0, 80),
+          price: Math.max(0, Number(i.price) || 0),
+          unit: String(i.unit || 'kg').slice(0, 10),
+          image: imgs[0] || '',
+          images: imgs
+        };
+      });
       const updated = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
       const sh = b.shop || {};
       const shop = { name: String(sh.name || '').trim().slice(0, 80) || 'Kishmish Shop', tagline: String(sh.tagline || '').trim().slice(0, 120) };

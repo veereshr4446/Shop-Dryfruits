@@ -55,6 +55,9 @@ module.exports = async (req, res) => {
       const updated = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
       const sh = b.shop || {};
       const shop = { name: String(sh.name || '').trim().slice(0, 80) || 'Kishmish Shop', tagline: String(sh.tagline || '').trim().slice(0, 120) };
+      let wa = String(sh.whatsapp || '').replace(/\D/g, '');
+      if (wa.length === 10) wa = '91' + wa;
+      if (wa.length >= 11 && wa.length <= 15) shop.whatsapp = wa;
       await put('products.json', JSON.stringify({ updated, shop, items }), { access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
       const gone = (Array.isArray(b.removed) ? b.removed : []).filter(isBlobUrl);
       if (gone.length) { try { await del(gone); } catch (e) {} }

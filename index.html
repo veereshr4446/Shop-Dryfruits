@@ -44,7 +44,7 @@ main{max-width:1000px;margin:0 auto;padding:24px 16px 100px}
 (async()=>{
   const $=id=>document.getElementById(id);
   let d;
-  try{ d=await (await fetch('products.json?t='+Date.now())).json(); }
+  try{ try{ d=await (await fetch('/api/products?t='+Date.now())).json(); if(!d.items) throw 0; }catch(_){ d=await (await fetch('products.json?t='+Date.now())).json(); } }
   catch(e){ $('grid').innerHTML='<p class="empty">Prices will be here soon.</p>'; return; }
   const s=d.shop||{};
   $('shop').textContent=s.name||'Kishmish Shop'; document.title=s.name||'Kishmish Shop';

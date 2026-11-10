@@ -39,46 +39,38 @@ input[type=file]{display:none}
 <main id="app"></main>
 <div class="bar" id="bar" hidden><p class="msg" id="msg"></p><button class="save" id="save">Save changes</button></div>
 <script>
-const OWNER='veereshr4446', REPO='Shop-Dryfruits', BR='main';
-const api=p=>`https://api.github.com/repos/${OWNER}/${REPO}/contents/${p}`;
-let token=localStorage.getItem('shop_token')||'', data=null, sha=null, removed=[];
 const $=id=>document.getElementById(id), app=$('app');
-const b64=s=>btoa(unescape(encodeURIComponent(s)));
+let data=null, removed=[];
 const msg=(t,e)=>{$('msg').textContent=t;$('msg').className='msg'+(e?' err':'')};
-async function gh(path,method='GET',body){
-  const url=api(path)+(method==='GET'?`?ref=${BR}&t=${Date.now()}`:'');
-  const r=await fetch(url,{method,headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'},body:body?JSON.stringify(body):undefined});
-  if(!r.ok){const e=new Error('GitHub '+r.status);e.status=r.status;throw e;}
-  return r.json();
+async function call(body){
+  const r=await fetch('/api/admin',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  let j={};try{j=await r.json();}catch(e){}
+  if(!r.ok){const e=new Error(j.error||('Error '+r.status));e.status=r.status;throw e;}
+  return j;
 }
-function setup(note){
+function login(note){
   $('bar').hidden=true;
-  app.innerHTML=`<div class="card"><b>First time setup</b><p class="hint">${note||'Paste the access code once. This phone will remember it.'}</p>
-  <label for="tk">Access code</label><input id="tk" type="password" autocomplete="off"><br><br><button class="photo" id="go">Continue</button></div>`;
-  $('go').onclick=()=>{token=$('tk').value.trim();localStorage.setItem('shop_token',token);load();};
+  app.innerHTML=`<div class="card"><b>Enter password</b><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><p class="msg err" id="pe">${note||''}</p><button class="photo" id="go">Open</button><p class="hint">You only need to do this once on this phone.</p></div>`;
+  const go=async()=>{$('pe').textContent='Checking...';
+    try{await call({action:'login',password:$('pw').value});load();}
+    catch(e){$('pe').textContent=e.status===401?'Wrong password. Try again.':e.message;}};
+  $('go').onclick=go;$('pw').onkeydown=e=>{if(e.key==='Enter')go();};
 }
 async function load(){
-  if(!token) return setup();
   app.innerHTML='<p>Loading...</p>';
-  try{
-    const f=await gh('products.json'); sha=f.sha;
-    data=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
-    removed=[]; render();
-  }catch(e){
-    if(e.status===401||e.status===403||e.status===404){localStorage.removeItem('shop_token');token='';setup('That code did not work. Ask for a new one.');}
-    else app.innerHTML='<p class="err">Could not load. Check internet and refresh.</p>';
-  }
+  try{data=await (await fetch('/api/products?t='+Date.now())).json();removed=[];render();}
+  catch(e){app.innerHTML='<p class="err">Could not load. Check internet and refresh.</p>';}
 }
 function render(){
   $('bar').hidden=false; msg('');
   app.innerHTML='';
   data.items.forEach((it,i)=>{
     const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="row"><div class="thumb">${(it.newImage||it.image)?'':'🍇'}</div><div style="flex:1"><label style="margin-top:0">Name</label><input type="text" value=""></div></div>
+    const src=it.newImage||it.preview||(it.image?it.image+'?t='+Date.now():'');
+    c.innerHTML=`<div class="row"><div class="thumb">${src?'':'🍇'}</div><div style="flex:1"><label style="margin-top:0">Name</label><input type="text"></div></div>
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
     <div class="row" style="margin-top:12px;justify-content:space-between"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">Change photo<input type="file" accept="image/*"></label><button class="del">Delete</button></div>`;
-    const th=c.querySelector('.thumb'),src=it.newImage||it.image;
-    if(src){const im=document.createElement('img');im.src=it.newImage||(it.image+'?t='+Date.now());th.appendChild(im);}
+    if(src){const im=document.createElement('img');im.src=src;im.alt='';c.querySelector('.thumb').appendChild(im);}
     const [nm,pr]=c.querySelectorAll('input[type=text],input[type=number]');
     nm.value=it.name;pr.value=it.price;
     nm.oninput=()=>it.name=nm.value; pr.oninput=()=>it.price=Number(pr.value);
@@ -96,21 +88,21 @@ $('save').onclick=async()=>{
   try{
     for(const it of data.items){
       if(it.newImage){
-        const path='images/'+it.id+'-'+Date.now()+'.jpg';
-        await gh(path,'PUT',{message:'Add photo',branch:BR,content:it.newImage.split(',')[1]});
+        const name=it.id.replace(/[^\w-]/g,'')+'-'+Date.now()+'.jpg';
+        const r=await call({action:'image',name,content:it.newImage.split(',')[1]});
         if(it.image)removed.push(it.image);
-        it.image=path;
+        it.image=r.url;it.preview=it.newImage;delete it.newImage;
       }
     }
-    const out={shop:data.shop,updated:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image}))};
-    await gh('products.json','PUT',{message:'Update prices',branch:BR,sha,content:b64(JSON.stringify(out,null,2))});
-    for(const p of removed){try{const f=await gh(p);await gh(p,'DELETE',{message:'Remove photo',branch:BR,sha:f.sha});}catch(e){}}
-    msg('Saved! The website updates in about 1 minute.');
-    await load(); msg('Saved! The website updates in about 1 minute.');
-  }catch(e){msg('Could not save ('+e.message+'). Try again.',true);}
+    await call({action:'save',items:data.items.map(({id,name,price,unit,image})=>({id,name,price,unit,image})),removed});
+    removed=[];render();msg('Saved! The website is updated.');
+  }catch(e){
+    if(e.status===401){login('Please enter the password again.');}
+    else msg('Could not save ('+e.message+'). Try again.',true);
+  }
   b.disabled=false;
 };
-load();
+call({action:'check'}).then(load).catch(()=>login());
 </script>
 </body>
 </html>

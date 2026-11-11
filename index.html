@@ -42,6 +42,10 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .price{font:800 1.7rem "Baloo 2",system-ui,sans-serif;color:var(--price)}
 .price small{font-size:.9rem;font-weight:600;color:inherit;opacity:.8}
 .order{margin-top:auto;display:block;text-align:center;background:var(--leafd);color:var(--cream);text-decoration:none;font-weight:700;padding:11px;border-radius:10px;border:2px solid var(--gold)}
+.acts{margin-top:auto;display:flex;gap:8px}
+.acts .order{margin-top:0;flex:1}
+.share{flex:none;width:48px;border-radius:10px;border:2px solid var(--gold);background:var(--card);color:var(--price);font-size:1.2rem;cursor:pointer;display:grid;place-items:center}
+.share:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .msg{text-align:center;padding:60px 0;opacity:.7}
 .fab{position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:auto;background:#1fa855;color:#fff;text-align:center;font-weight:800;padding:14px;border-radius:14px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 </style>
@@ -117,7 +121,18 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     const u=document.createElement('small'); u.textContent='/ '+(it.unit||'kg'); p.appendChild(u);
     info.append(n,p);
     const l=link('Hello, I want to order '+it.name+' (₹'+it.price+'/'+(it.unit||'kg')+').');
-    if(l){ const a=document.createElement('a'); a.className='order'; a.href=l; a.textContent='Order this'; info.appendChild(a); }
+    const acts=document.createElement('div'); acts.className='acts';
+    if(l){ const a=document.createElement('a'); a.className='order'; a.href=l; a.textContent='Order this'; acts.appendChild(a); }
+    const sh=document.createElement('button'); sh.type='button'; sh.className='share'; sh.textContent='📤'; sh.setAttribute('aria-label','Share '+it.name);
+    sh.onclick=async()=>{
+      const text=it.name+' - ₹'+it.price+'/'+(it.unit||'kg')+' at Kissan Cold Storage, Vijayapura';
+      const url=location.origin+'/';
+      try{
+        if(navigator.share){ await navigator.share({title:it.name,text,url}); }
+        else{ await navigator.clipboard.writeText(text+'\n'+url); sh.textContent='✓'; setTimeout(()=>sh.textContent='📤',1500); }
+      }catch(e){}
+    };
+    acts.appendChild(sh); info.appendChild(acts);
     c.append(ph,info); $('grid').appendChild(c);
   }
 })();

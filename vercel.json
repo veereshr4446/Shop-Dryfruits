@@ -5,5 +5,11 @@
       "destination": "/admin/",
       "permanent": true
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/products",
+      "schedule": "30 21 * * *"
+    }
   ]
 }

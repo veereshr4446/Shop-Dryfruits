@@ -1,6 +1,7 @@
 // Owner only: login (password), upload photo, save list. Login lasts 1 year on that phone.
 const crypto = require('crypto');
 const { put, del } = require('@vercel/blob');
+const { loadSaved } = require('./_expiry');
 
 const hmac = () => crypto.createHmac('sha256', String(process.env.ADMIN_PASSWORD)).update('shop-admin-v1').digest('hex');
 const same = (a, b) => {
@@ -45,9 +46,13 @@ module.exports = async (req, res) => {
     }
 
     if (b.action === 'save') {
+      const prev = {};
+      const old = await loadSaved();
+      if (old && Array.isArray(old.items)) old.items.forEach(o => { prev[o.id] = o; });
+      const sig = o => [o.name, o.price, o.unit, (o.images || []).join('|')].join('~');
       const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => {
         const imgs = (Array.isArray(i.images) ? i.images : (i.image ? [i.image] : [])).filter(isBlobUrl).slice(0, 6);
-        return {
+        const item = {
           id: String(i.id || '').replace(/[^\w-]/g, '').slice(0, 60) || 'i' + Date.now(),
           name: String(i.name || '').slice(0, 80),
           price: Math.max(0, Number(i.price) || 0),
@@ -55,6 +60,10 @@ module.exports = async (req, res) => {
           image: imgs[0] || '',
           images: imgs
         };
+        // New or edited items get a fresh 7 days; untouched items keep their old clock.
+        const o = prev[item.id];
+        item.ts = o && o.ts && sig(o) === sig(item) ? o.ts : Date.now();
+        return item;
       });
       const updated = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
       const sh = b.shop || {};

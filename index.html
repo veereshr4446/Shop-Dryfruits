@@ -13,14 +13,19 @@
 :root[data-theme=dark]{--paper:#1a120b;--ink:#f6ecd2;--card:#2a1c11;--line:#4a3220;--price:#9ad46a;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.bar{position:sticky;top:0;z-index:20;background:var(--wood);color:var(--cream);display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:3px solid var(--gold)}
-.contacts{flex:1;display:flex;flex-wrap:wrap;gap:4px 18px;justify-content:center;font-size:.95rem}
-.contacts a{color:var(--cream);text-decoration:none;font-weight:600;white-space:nowrap}
-.contacts b{color:var(--gold);font-weight:800;letter-spacing:.3px}
-.contacts a:focus-visible,.theme:focus-visible,.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.theme{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--cream);font-size:1.15rem;cursor:pointer;display:grid;place-items:center}
+.bar{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--wood2) 0%,var(--wood) 100%);color:var(--cream);padding:9px 12px;border-bottom:2px solid var(--gold);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.contacts{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1000px;margin:0 auto}
+.ct{display:flex;align-items:center;gap:8px;color:var(--cream);text-decoration:none;min-width:0;white-space:nowrap}
+.ct.r{flex-direction:row-reverse;text-align:right;margin-left:auto}
+.ct .ic{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#3a2400;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 0 2px rgba(240,180,41,.25)}
+.ct .ic svg{width:15px;height:15px}
+.ct .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.ct small{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;opacity:.95}
+.ct b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
+.ct:focus-visible,.theme:focus-visible,.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.theme{position:absolute;top:10px;right:12px;width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--cream);font-size:1.15rem;cursor:pointer;display:grid;place-items:center}
 .banner{display:block;width:100%;height:auto;background:var(--wood2)}
-.head{text-align:center;padding:18px 16px 4px}
+.head{position:relative;text-align:center;padding:18px 58px 4px}
 h1{font:800 clamp(1.5rem,5.5vw,2.2rem)/1.15 "Baloo 2",system-ui,sans-serif;margin:0;color:var(--wood)}
 :root[data-theme=dark] h1{color:var(--gold)}
 .tag{margin:4px 0 0;opacity:.8}
@@ -58,10 +63,10 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 <body>
 <div class="bar">
   <div class="contacts" id="contacts"></div>
-  <button class="theme" id="theme" type="button" aria-label="Switch dark or light mode"></button>
 </div>
 <img class="banner" src="banner.jpg" alt="Kissan Cold Storage, Vijayapura. Fresh Kishmish direct from cold storage." width="1600" height="679">
 <div class="head">
+  <button class="theme" id="theme" type="button" aria-label="Switch dark or light mode"></button>
   <h1 id="shop">Kissan Cold Storage</h1>
   <p class="tag" id="tag"></p>
   <span class="upd" id="upd" hidden></span>
@@ -86,13 +91,18 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
   $('shop').textContent=s.name||'Kissan Cold Storage'; document.title=s.name||'Kissan Cold Storage';
   $('tag').textContent=s.tagline||'';
   if(d.updated){ $('upd').hidden=false; $('upd').textContent='Prices updated '+d.updated; }
-  for(const c of (s.contacts||[])){
-    const ph=String(c.phone||'').replace(/\D/g,''); if(!ph) continue;
-    const a=document.createElement('a'); a.href='tel:+91'+ph.slice(-10);
-    a.append('📞 '+c.name+(c.role?' ('+c.role+')':'')+' ');
-    const n=document.createElement('b'); n.textContent=ph; a.appendChild(n);
-    $('contacts').appendChild(a);
-  }
+  const PH='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>';
+  const cs=(s.contacts||[]).filter(c=>String(c.phone||'').replace(/\D/g,'')).sort((x,y)=>(/owner/i.test(y.role||'')?1:0)-(/owner/i.test(x.role||'')?1:0));
+  cs.forEach((c,i)=>{
+    const ph=String(c.phone).replace(/\D/g,'');
+    const a=document.createElement('a'); a.className='ct'+(i>0?' r':''); a.href='tel:+91'+ph.slice(-10);
+    a.setAttribute('aria-label','Call '+c.name+(c.role?' ('+c.role+')':''));
+    const ic=document.createElement('span'); ic.className='ic'; ic.innerHTML=PH;
+    const tx=document.createElement('span'); tx.className='tx';
+    const sm=document.createElement('small'); sm.textContent=(c.role?c.role+' · ':'')+c.name;
+    const n=document.createElement('b'); n.textContent=ph.slice(-10);
+    tx.append(sm,n); a.append(ic,tx); $('contacts').appendChild(a);
+  });
   const num=(s.whatsapp||'').replace(/\D/g,'');
   const link=t=>num&&!/X/i.test(s.whatsapp)?'https://wa.me/'+num+'?text='+encodeURIComponent(t):'';
   if(link('Hello')){ $('wa').hidden=false; $('wa').href=link('Hello, I want to order kishmish.'); }

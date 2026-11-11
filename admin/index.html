@@ -109,7 +109,8 @@ function render(){
     it.images=it.images||(it.image?[it.image]:[]);it.pending=it.pending||[];
     const total=()=>it.images.length+it.pending.length;
     const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<label style="margin-top:0">Name</label><input type="text">
+    const left=it.ts?Math.max(1,Math.ceil((it.ts+6048e5-Date.now())/864e5)):7;
+    c.innerHTML=`<p style="margin:0 0 8px;font-size:.85rem;opacity:.75">⏳ Auto-removes in ${left} day${left>1?'s':''}. Change price or photos and save to keep it 7 more days.</p><label style="margin-top:0">Name</label><input type="text">
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
     <label>Photos (${total()} of 6)</label><div class="strip"></div>
     <div class="row" style="margin-top:12px;justify-content:space-between"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos<input type="file" accept="image/*" multiple></label><button class="del">Delete item</button></div>`;

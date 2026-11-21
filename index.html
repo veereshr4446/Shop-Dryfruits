@@ -4,6 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kissan Cold Storage</title>
+<meta name="description" content="Kissan Cold Storage, Vijayapura, KA - Fresh Kishmish direct from cold storage.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kissan Cold Storage">
+<meta property="og:title" content="Kissan Cold Storage">
+<meta property="og:description" content="Vijayapura, KA - Fresh Kishmish direct from cold storage.">
+<meta property="og:url" content="https://shop-dryfruits.vercel.app/">
+<meta property="og:image" content="https://shop-dryfruits.vercel.app/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Kissan Cold Storage - Shop Fresh Kishmish">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kissan Cold Storage">
+<meta name="twitter:description" content="Vijayapura, KA - Fresh Kishmish direct from cold storage.">
+<meta name="twitter:image" content="https://shop-dryfruits.vercel.app/og-image.jpg">
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
@@ -137,10 +152,10 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     if(l){ const a=document.createElement('a'); a.className='order'; a.href=l; a.textContent='Order this'; acts.appendChild(a); }
     const sh=document.createElement('button'); sh.type='button'; sh.className='share'; sh.innerHTML=ICON; sh.setAttribute('aria-label','Share '+it.name);
     sh.onclick=async()=>{
-      const text=it.name+' - ₹'+it.price+'/'+(it.unit||'kg')+' at Kissan Cold Storage, Vijayapura';
+      const text='Kissan Cold Storage, Vijayapura, KA - Fresh Kishmish';
       const url=location.origin+'/';
       try{
-        if(navigator.share){ await navigator.share({title:it.name,text,url}); }
+        if(navigator.share){ await navigator.share({title:'Kissan Cold Storage',text,url}); }
         else{ await navigator.clipboard.writeText(text+'\n'+url); sh.innerHTML=OK; setTimeout(()=>sh.innerHTML=ICON,1500); }
       }catch(e){}
     };

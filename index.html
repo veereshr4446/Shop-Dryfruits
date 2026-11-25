@@ -74,7 +74,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .any>*{max-width:1000px}
 .any .tick{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#3a2400;font-size:1rem;font-weight:900;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 0 2px rgba(240,180,41,.25);animation:pulse 2s infinite}
 .any .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1}
-.any small{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;opacity:.95}
+.any small{align-self:flex-start;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 9px;margin-bottom:3px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45)}
 .any b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
 .any .nm{font-size:.8rem;color:var(--cream);opacity:.9}
 .any .go{flex:none;display:flex;align-items:center;gap:6px;font-weight:800;font-size:.9rem;color:#3a2400;padding:7px 14px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12)}
@@ -138,7 +138,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
     const t=document.createElement('span'); t.className='tick'; t.textContent='✓'; t.setAttribute('aria-hidden','true');
     const tx=document.createElement('span'); tx.className='tx';
-    const sm=document.createElement('small'); sm.textContent='Call anytime';
+    const sm=document.createElement('small'); sm.textContent='Call anytime for orders';
     const n=document.createElement('b'); n.textContent='+91 '+ap.slice(0,5)+' '+ap.slice(5);
     tx.append(sm,n);
     if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}

@@ -73,6 +73,8 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .any[hidden]{display:none}
 .any>*{max-width:1000px}
 .any .tick{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#3a2400;font-size:1rem;font-weight:900;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 0 2px rgba(240,180,41,.25);animation:pulse 2s infinite}
+.any .tick svg{width:15px;height:15px}
+.any .ok{font-size:1.35em;line-height:1;margin-right:6px;vertical-align:-.12em}
 .any .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1}
 .any small{align-self:flex-start;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 9px;margin-bottom:3px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45)}
 .any b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
@@ -136,10 +138,10 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     const ap=String(s.anytime.phone).replace(/\D/g,'').slice(-10), a=$('any');
     a.href='tel:+91'+ap; a.hidden=false;
     a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
-    const t=document.createElement('span'); t.className='tick'; t.textContent='✓'; t.setAttribute('aria-hidden','true');
+    const t=document.createElement('span'); t.className='tick'; t.innerHTML=PH; t.setAttribute('aria-hidden','true');
     const tx=document.createElement('span'); tx.className='tx';
     const sm=document.createElement('small'); sm.textContent='Call anytime for orders';
-    const n=document.createElement('b'); n.textContent='+91 '+ap.slice(0,5)+' '+ap.slice(5);
+    const n=document.createElement('b'); const ok=document.createElement('span'); ok.className='ok'; ok.textContent='✅'; ok.setAttribute('aria-hidden','true'); n.append(ok,'+91 '+ap.slice(0,5)+' '+ap.slice(5));
     tx.append(sm,n);
     if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}
     const go=document.createElement('span'); go.className='go'; go.innerHTML=PH+'Call';

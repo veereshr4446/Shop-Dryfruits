@@ -69,6 +69,18 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .share:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .msg{text-align:center;padding:60px 0;opacity:.7}
 .fab{position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:auto;background:#1fa855;color:#fff;text-align:center;font-weight:800;padding:14px;border-radius:14px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.any{display:flex;align-items:center;gap:12px;max-width:1000px;margin:0 auto;padding:10px 14px;background:linear-gradient(135deg,#1f7a3a,#2fa04f);color:#fff;text-decoration:none;border-bottom:2px solid var(--gold)}
+.any[hidden]{display:none}
+.any .tick{flex:none;width:34px;height:34px;border-radius:50%;background:#fff;color:#1f7a3a;display:grid;place-items:center;font-size:1.2rem;font-weight:900;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:pulse 2s infinite}
+.any .tx{display:flex;flex-direction:column;line-height:1.2;min-width:0;flex:1}
+.any small{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#d9ffe4}
+.any b{font-size:clamp(1rem,4.6vw,1.2rem);font-weight:800;font-variant-numeric:tabular-nums}
+.any .nm{font-size:.85rem;opacity:.95}
+.any .go{flex:none;background:var(--gold);color:#3a2400;font-weight:800;border-radius:99px;padding:8px 14px;display:flex;align-items:center;gap:6px;font-size:.9rem}
+.any .go svg{width:16px;height:16px}
+.any:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}70%{box-shadow:0 0 0 10px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@media (prefers-reduced-motion:reduce){.any .tick{animation:none}}
 </style>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#4a2a14">
@@ -79,6 +91,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 <div class="bar">
   <div class="contacts" id="contacts"></div>
 </div>
+<a class="any" id="any" href="#" hidden></a>
 <img class="banner" src="banner.jpg" alt="Kissan Cold Storage, Vijayapura. Fresh Kishmish direct from cold storage." width="1600" height="679">
 <div class="head">
   <button class="theme" id="theme" type="button" aria-label="Switch dark or light mode"></button>
@@ -118,6 +131,19 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     const n=document.createElement('b'); n.textContent=ph.slice(-10);
     tx.append(sm,n); a.append(ic,tx); $('contacts').appendChild(a);
   });
+  if(s.anytime&&String(s.anytime.phone||'').replace(/\D/g,'').length>=10){
+    const ap=String(s.anytime.phone).replace(/\D/g,'').slice(-10), a=$('any');
+    a.href='tel:+91'+ap; a.hidden=false;
+    a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
+    const t=document.createElement('span'); t.className='tick'; t.textContent='✓'; t.setAttribute('aria-hidden','true');
+    const tx=document.createElement('span'); tx.className='tx';
+    const sm=document.createElement('small'); sm.textContent='Call anytime';
+    const n=document.createElement('b'); n.textContent='+91 '+ap.slice(0,5)+' '+ap.slice(5);
+    tx.append(sm,n);
+    if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}
+    const go=document.createElement('span'); go.className='go'; go.innerHTML=PH+'Call';
+    a.append(t,tx,go);
+  }
   const num=(s.whatsapp||'').replace(/\D/g,'');
   const link=t=>num&&!/X/i.test(s.whatsapp)?'https://wa.me/'+num+'?text='+encodeURIComponent(t):'';
   if(link('Hello')){ $('wa').hidden=false; $('wa').href=link('Hello, I want to order kishmish.'); }

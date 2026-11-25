@@ -141,7 +141,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
     const t=document.createElement('span'); t.className='tick'; t.innerHTML=PH; t.setAttribute('aria-hidden','true');
     const tx=document.createElement('span'); tx.className='tx';
-    const sm=document.createElement('small'); sm.textContent='Call anytime for orders';
+    const sm=document.createElement('small'); sm.textContent='Seller · Call anytime for orders';
     const n=document.createElement('b'); const ok=document.createElement('span'); ok.className='ok'; ok.setAttribute('aria-hidden','true'); ok.innerHTML='<svg viewBox="0 0 24 24"><defs><linearGradient id="okg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6d66b"/><stop offset=".6" stop-color="#f2c14e"/><stop offset="1" stop-color="#c98f12"/></linearGradient></defs><circle cx="12" cy="12" r="11" fill="url(#okg)"/><path d="M6.5 12.5l3.8 3.8 7.2-8" fill="none" stroke="#3a2400" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; n.append('+91 '+ap.slice(0,5)+' '+ap.slice(5),ok);
     tx.append(sm,n);
     if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}

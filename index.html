@@ -77,7 +77,8 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .any .ok{display:inline-block;margin-left:8px;vertical-align:-.2em;line-height:0}
 .any .ok svg{width:1.3em;height:1.3em;display:block;filter:drop-shadow(0 0 5px rgba(242,193,78,.5))}
 .any .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1}
-.any small{align-self:flex-start;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 9px;margin-bottom:3px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45)}
+.any small{align-self:flex-start;display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.any small span{font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 8px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45);white-space:nowrap}
 .any b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
 .any .nm{font-size:.8rem;color:var(--cream);opacity:.9}
 .any .go{flex:none;display:flex;align-items:center;gap:6px;font-weight:800;font-size:.9rem;color:#3a2400;padding:7px 14px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12)}
@@ -141,7 +142,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
     const t=document.createElement('span'); t.className='tick'; t.innerHTML=PH; t.setAttribute('aria-hidden','true');
     const tx=document.createElement('span'); tx.className='tx';
-    const sm=document.createElement('small'); sm.textContent='Seller · Call anytime for orders';
+    const sm=document.createElement('small'); ['Seller','Call anytime for orders'].forEach(w=>{const c=document.createElement('span'); c.textContent=w; sm.appendChild(c);});
     const n=document.createElement('b'); const ok=document.createElement('span'); ok.className='ok'; ok.setAttribute('aria-hidden','true'); ok.innerHTML='<svg viewBox="0 0 24 24"><defs><linearGradient id="okg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6d66b"/><stop offset=".6" stop-color="#f2c14e"/><stop offset="1" stop-color="#c98f12"/></linearGradient></defs><circle cx="12" cy="12" r="11" fill="url(#okg)"/><path d="M6.5 12.5l3.8 3.8 7.2-8" fill="none" stroke="#3a2400" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; n.append('+91 '+ap.slice(0,5)+' '+ap.slice(5),ok);
     tx.append(sm,n);
     if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}

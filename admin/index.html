@@ -135,7 +135,7 @@ function render(){
   add.onclick=()=>{data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
   app.appendChild(add);
 }
-function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8));URL.revokeObjectURL(u);};im.src=u;});}
+function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const m=2400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const g=c.getContext("2d");g.imageSmoothingQuality="high";g.drawImage(im,0,0,c.width,c.height);let d=c.toDataURL("image/jpeg",.92);if(d.length>3300000)d=c.toDataURL("image/jpeg",.82);res(d);URL.revokeObjectURL(u);};im.src=u;});}
 function showDone(){
   $('dtime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
   $('done').classList.add('show');

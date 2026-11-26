@@ -132,14 +132,14 @@ function videoInfo(file){return new Promise(res=>{const v=document.createElement
     c.width=Math.round((v.videoWidth||640)*k);c.height=Math.round((v.videoHeight||360)*k);
     try{c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>fin({duration:d,poster:b}),'image/jpeg',.8);}catch(e){fin({duration:d,poster:null});}};
   setTimeout(()=>fin({duration:v.duration||0,poster:null}),8000);v.src=u;});}
-// Makes any phone video fit the free plan: first 45 seconds, tall 4:5, no sound, about 0.5 MB per 10 seconds. Runs inside the browser in real time.
+// Makes any phone video fit the free plan: first 45 seconds, tall 4:5 at 720x900, no sound, about 1.3 MB per 10 seconds. Runs inside the browser in real time.
 const VMAX=45;
 function recVideo(file,prog){return new Promise((res,rej)=>{
-  const W=540,H=675,u=URL.createObjectURL(file),v=document.createElement('video');
+  const W=720,H=900,u=URL.createObjectURL(file),v=document.createElement('video');
   const mime=window.MediaRecorder&&['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
   if(!mime||!HTMLCanvasElement.prototype.captureStream){URL.revokeObjectURL(u);return rej(new Error('NOREC'));}
   v.muted=true;v.playsInline=true;v.preload='auto';v.src=u;
-  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.imageSmoothingQuality='high';
   let rec,chunks=[],poster=null,done=false,guard;
   const fail=m=>{if(done)return;done=true;clearTimeout(guard);try{rec&&rec.state!=='inactive'&&rec.stop();}catch(e){}v.pause();URL.revokeObjectURL(u);rej(new Error(m));};
   v.onerror=()=>fail('This video cannot be read.');
@@ -150,7 +150,7 @@ function recVideo(file,prog){return new Promise((res,rej)=>{
   };
   v.onloadeddata=()=>{
     const len=Math.min(VMAX,isFinite(v.duration)&&v.duration>0?v.duration:VMAX);
-    try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:650000});}catch(e){return fail('NOREC');}
+    try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:1000000});}catch(e){return fail('NOREC');}
     rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
     rec.onstop=()=>{if(done)return;done=true;clearTimeout(guard);v.pause();URL.revokeObjectURL(u);
       const out=new Blob(chunks,{type:mime.split(';')[0]});
@@ -176,13 +176,13 @@ async function prepVideo(f){
   if(i.duration<=VMAX+.5&&f.size<=4*1048576)return{ok:true,blob:f,poster:i.poster}; // already short and small
   try{
     const r=await recVideo(f,(t,l)=>msg('Shrinking video... '+Math.floor(t)+' of '+Math.floor(l)+' s. Keep this page open.'));
-    if(r.blob.size>6*1048576)return{msg:'Still '+MB(r.blob.size)+' MB after shrinking. Please pick a simpler or shorter video.'};
+    if(r.blob.size>8*1048576)return{msg:'Still '+MB(r.blob.size)+' MB after shrinking. Please pick a simpler or shorter video.'};
     return{ok:true,blob:r.blob,poster:r.poster||i.poster};
   }catch(e){
     if(e.message!=='NOREC')return{msg:e.message};
     // Older browser that cannot shrink: only accept videos that already fit.
     if(i.duration>VMAX+.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is 45 seconds. Please trim it, or open this page in Chrome to trim automatically.'};
-    if(f.size>6*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 6 MB. Send it to yourself on WhatsApp first to shrink it.'};
+    if(f.size>8*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 8 MB. Send it to yourself on WhatsApp first to shrink it.'};
     return{ok:true,blob:f,poster:i.poster};
   }
 }

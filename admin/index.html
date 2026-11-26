@@ -54,12 +54,25 @@ input[type=file]{display:none}
 .st button{position:absolute;top:3px;right:3px;width:30px;height:30px;border-radius:50%;padding:0;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;line-height:1}
 .st video{width:100%;height:100%;object-fit:cover;display:block}
 .vb{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:99px}
-.sr{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-.sr .st{width:92px;height:64px}
-.sr input[type=text]{padding:8px 10px;font-size:.95rem}
-.mini{padding:6px 10px;font-size:1rem;background:var(--line);color:var(--ink);border-radius:8px}
-.mini:disabled{opacity:.35}
-.ctl{display:flex;flex-direction:column;gap:6px;flex:none}
+.sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.sh b{font-size:1.15rem}.cnt{font-weight:800;opacity:.7}
+.film{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 12px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.slot{position:relative;flex:0 0 min(68vw,250px);aspect-ratio:4/5;border-radius:18px;overflow:hidden;scroll-snap-align:start;background:var(--line)}
+.slot .sm,.slot .sm img,.slot .sm video{width:100%;height:100%;object-fit:cover;display:block}
+.slot .sm{display:grid;place-items:center;font-size:3rem}
+.nb{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:.85rem;padding:3px 11px;border-radius:99px}
+.slot .sx{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;padding:0;background:rgba(0,0,0,.65);color:#fff;font-size:1.1rem;line-height:1}
+.slot .mv{position:absolute;top:50%;width:38px;height:38px;margin-top:-19px;border-radius:50%;padding:0;background:rgba(0,0,0,.5);color:#fff;font-size:1rem;line-height:1}
+.slot .mv.l{left:8px}.slot .mv.r{right:8px}
+.slot .cap{position:absolute;left:8px;right:8px;bottom:8px;width:auto;border:0;border-radius:12px;padding:10px 12px;font-size:.95rem;background:rgba(0,0,0,.55);color:#fff}
+.slot .cap::placeholder{color:rgba(255,255,255,.7)}
+.slot.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:auto;border:3px dashed var(--gold);border-radius:18px;color:var(--ink);cursor:pointer;
+  background:linear-gradient(110deg,transparent 35%,rgba(227,167,47,.16) 50%,transparent 65%) 0 0/250% 100%,var(--card);animation:sheen 2.8s linear infinite}
+.slot.empty .pl{width:64px;height:64px;border-radius:50%;background:var(--gold);color:#2a1a00;display:grid;place-items:center;font-size:2.4rem;font-weight:800;line-height:1}
+.slot.empty span.t{font-weight:800;font-size:1.05rem}
+.slot.empty .nb{background:rgba(0,0,0,.45)}
+@keyframes sheen{from{background-position:150% 0,0 0}to{background-position:-100% 0,0 0}}
+@media (prefers-reduced-motion:reduce){.slot.empty{animation:none}}
 </style>
 <script type="module">import {upload} from "https://esm.sh/@vercel/blob@2/client";window.blobUpload=upload;</script>
 <link rel="manifest" href="/admin/manifest.json">
@@ -80,7 +93,8 @@ input[type=file]{display:none}
 </div>
 <script>
 const $=id=>document.getElementById(id), app=$('app');
-let data=null, removed=[];
+let data=null, removed=[], working=0;
+const setWorking=d=>{working+=d;$('save').disabled=working>0;};
 const msg=(t,e)=>{$('msg').textContent=t;$('msg').className='msg'+(e?' err':'')};
 async function call(body){
   const r=await fetch('/api/admin',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -90,7 +104,7 @@ async function call(body){
 }
 function login(note){
   $('bar').hidden=true;
-  app.innerHTML=`<div class="card"><b>Enter password</b><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><p class="msg err" id="pe">${note||''}</p><button class="photo" id="go">Open</button><p class="hint">You only need to do this once on this phone.</p></div>`;
+  app.innerHTML=`<div class="card"><b>Enter password</b><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><p class="msg err" id="pe">${note||''}</p><button class="photo" id="go">Open</button></div>`;
   const go=async()=>{$('pe').textContent='Checking...';
     try{await call({action:'login',password:$('pw').value});load();}
     catch(e){$('pe').textContent=e.status===401?'Wrong password. Try again.':e.message;}};
@@ -174,13 +188,6 @@ async function prepVideo(f){
     return{ok:true,blob:f,poster:i.poster};
   }
 }
-async function checkVideo(f,maxSec){maxSec=maxSec||20;
-  if(f.size>10*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 10 MB.\nTip: send it to yourself on WhatsApp first (it shrinks it), then pick it from there.'};
-  const i=await videoInfo(f);
-  if(i.bad)return{msg:'This video cannot be read.\nTip: send it to yourself on WhatsApp first, then pick it from there.'};
-  if(i.duration>maxSec+.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is '+maxSec+' seconds. Please trim it.'};
-  return{ok:true,poster:i.poster};
-}
 function mediaEl(src,vid,poster){
   if(vid&&!poster){const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.src=src+'#t=0.1';return v;}
   const im=document.createElement('img');im.src=vid?poster:src;im.alt='';return im;
@@ -188,46 +195,54 @@ function mediaEl(src,vid,poster){
 const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label',label);x.onclick=fn;return x;};
 
 function slidesCard(){
+  const MAXS=10,L=data.slides;
   const c=document.createElement('div');c.className='card';
-  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">One slide = one video or one photo (for example one company). Up to 10 slides in total, any mix of videos and photos (all 10 can be videos). Videos can be up to 45 seconds. Longer ones are cut and every video is shrunk automatically (takes about as long as the video). Best look: tall (portrait).</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" multiple id="sv"></label></div>';
-  const list=c.querySelector('.sl'),L=data.slides;
-  if(!L.length)list.innerHTML='<p class="hint">No slides yet.</p>';
+  c.innerHTML='<div class="sh"><b>Slideshow</b><span class="cnt">'+L.length+' / '+MAXS+'</span></div><div class="film" id="film"></div><input type="file" id="sf" accept="image/*,video/*" multiple>';
+  const film=c.querySelector('#film'),inp=c.querySelector('#sf');
+  const mkbtn=(cls,txt,lab,fn)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=txt;b.setAttribute('aria-label',lab);b.onclick=fn;return b;};
   L.forEach((sl,i)=>{
-    const r=document.createElement('div');r.className='sr';
-    const t=document.createElement('div');t.className='st';
-    const vid=sl.type==='video';
-    t.appendChild(sl.blob?(sl.preview?mediaEl(sl.preview,false):document.createTextNode('🎬')):mediaEl(sl.url,vid,sl.poster));
-    if(vid){const vb=document.createElement('span');vb.className='vb';vb.textContent='▶ Video';t.appendChild(vb);}
-    const cap=document.createElement('input');cap.type='text';cap.maxLength=60;cap.placeholder='Caption (optional)';cap.value=sl.caption||'';cap.setAttribute('aria-label','Caption');cap.oninput=()=>sl.caption=cap.value;
-    const ctl=document.createElement('div');ctl.className='ctl';
-    const mk=(txt,lab,dis,fn)=>{const b=document.createElement('button');b.type='button';b.className='mini';b.textContent=txt;b.setAttribute('aria-label',lab);b.disabled=dis;b.onclick=fn;return b;};
-    const mv=d=>()=>{const j=i+d;[L[i],L[j]]=[L[j],L[i]];render();};
-    ctl.append(mk('◀','Move earlier',i===0,mv(-1)),mk('▶','Move later',i===L.length-1,mv(1)),mk('✕','Delete slide',false,()=>{if(!confirm('Delete this slide?'))return;if(sl.url)removed.push(sl.url);if(sl.poster)removed.push(sl.poster);L.splice(i,1);render();}));
-    r.append(t,cap,ctl);list.appendChild(r);
+    const vid=sl.type==='video',s=document.createElement('div');s.className='slot';
+    const m=document.createElement('div');m.className='sm';
+    m.appendChild(sl.blob?(sl.preview?mediaEl(sl.preview,false):document.createTextNode('🎬')):mediaEl(sl.url,vid,sl.poster));
+    const nb=document.createElement('span');nb.className='nb';nb.textContent=(i+1)+(vid?'  ▶':'');
+    const cap=document.createElement('input');cap.type='text';cap.className='cap';cap.maxLength=60;cap.placeholder='Name (optional)';cap.value=sl.caption||'';cap.setAttribute('aria-label','Name for slide '+(i+1));cap.oninput=()=>sl.caption=cap.value;
+    const mv=d=>()=>{const j=i+d;[L[i],L[j]]=[L[j],L[i]];render(j);};
+    s.append(m,nb,mkbtn('sx','✕','Delete slide '+(i+1),()=>{if(!confirm('Delete this slide?'))return;if(sl.url)removed.push(sl.url);if(sl.poster)removed.push(sl.poster);L.splice(i,1);render();}),cap);
+    if(i>0)s.appendChild(mkbtn('mv l','◀','Move slide '+(i+1)+' earlier',mv(-1)));
+    if(i<L.length-1)s.appendChild(mkbtn('mv r','▶','Move slide '+(i+1)+' later',mv(1)));
+    film.appendChild(s);
   });
-  c.querySelector('#si').onchange=async e=>{
+  for(let i=L.length;i<MAXS;i++){
+    const e=document.createElement('button');e.type='button';e.className='slot empty';e.setAttribute('aria-label','Add photo or video to slide '+(i+1));
+    e.innerHTML='<span class="nb">'+(i+1)+'</span><span class="pl">+</span><span class="t">Add photo or video</span>';
+    e.onclick=()=>inp.click();film.appendChild(e);
+  }
+  inp.onchange=async e=>{
     const files=[...e.target.files];e.target.value='';
-    for(const f of files){
-      if(L.length>=10){alert('Only 10 slides. Extra images were skipped.');break;}
-      try{msg('Preparing image...');const b=await shrinkImg(f,1350,.82);L.push({id:'s'+rid(),type:'image',caption:'',blob:b,preview:URL.createObjectURL(b)});}
-      catch(err){alert(err.message);}
-    }
-    render();
-  };
-  c.querySelector('#sv').onchange=async e=>{
-    const files=[...e.target.files];e.target.value='';
-    for(const f of files){
-      if(L.length>=10){alert('Only 10 slides. Extra videos were skipped.');break;}
-      msg('Checking video...');const r=await prepVideo(f);
-      if(!r.ok){msg('');alert(r.msg);continue;}
-      L.push({id:'s'+rid(),type:'video',caption:'',blob:r.blob,posterBlob:r.poster,preview:r.poster?URL.createObjectURL(r.poster):''});
-    }
-    render();
+    if(!files.length)return;
+    setWorking(1);
+    try{
+      for(const f of files){
+        if(L.length>=MAXS){alert('The slideshow is full ('+MAXS+' slides).');break;}
+        try{
+          if(f.type.startsWith('video/')||isVid(f.name)){
+            msg('Checking video...');const r=await prepVideo(f);
+            if(!r.ok){msg('');alert(r.msg);continue;}
+            L.push({id:'s'+rid(),type:'video',caption:'',blob:r.blob,posterBlob:r.poster,preview:r.poster?URL.createObjectURL(r.poster):''});
+          }else{
+            msg('Preparing photo...');const b=await shrinkImg(f,1350,.82);
+            L.push({id:'s'+rid(),type:'image',caption:'',blob:b,preview:URL.createObjectURL(b)});
+          }
+        }catch(err){msg('');alert(err.message);}
+      }
+    }finally{setWorking(-1);}
+    render(L.length-1);
   };
   return c;
 }
 
-function render(){
+function render(focus){
+  const sy=window.scrollY,fl=(document.getElementById('film')||{}).scrollLeft||0;
   $('bar').hidden=false; msg('');
   app.innerHTML='';
   data.shop=data.shop||{};data.slides=data.slides||[];
@@ -247,11 +262,10 @@ function render(){
     const nvid=()=>it.images.filter(isVid).length+it.pending.filter(p=>p.type==='video').length;
     const c=document.createElement('div');c.className='card';
     const left=it.ts?Math.max(1,Math.ceil((it.ts+6048e5-Date.now())/864e5)):7;
-    c.innerHTML=`<p style="margin:0 0 8px;font-size:.85rem;opacity:.75">⏳ Auto-removes in ${left} day${left>1?'s':''}. Change price or photos and save to keep it 7 more days.</p><label style="margin-top:0">Name</label><input type="text">
-    <label>Photos and videos (${total()} of 6)</label><div class="strip"></div>
+    c.innerHTML=`<p style="margin:0 0 8px;font-size:.85rem;opacity:.75">⏳ ${left} day${left>1?'s':''} left</p><label style="margin-top:0">Name</label><input type="text">
+    <label>Photos and videos</label><div class="strip"></div>
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
-    <div class="row" style="margin-top:12px;justify-content:space-between;flex-wrap:wrap"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos / videos<input type="file" accept="image/*,video/*" multiple></label><button class="del">Delete item</button></div>
-    <p class="hint" style="margin:8px 0 0">Up to 4 files per item, only 1 of them a video (up to 45 seconds, shrunk automatically).</p>`;
+    <div class="row" style="margin-top:12px;justify-content:space-between;flex-wrap:wrap"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos / videos<input type="file" accept="image/*,video/*" multiple></label><button class="del">Delete item</button></div>`;
     const strip=c.querySelector('.strip');
     const thumb=(el,vid,onx)=>{const t=document.createElement('div');t.className='st';t.appendChild(el);if(vid){const vb=document.createElement('span');vb.className='vb';vb.textContent='▶ Video';t.appendChild(vb);}t.appendChild(xbtn('Remove',onx));strip.appendChild(t);};
     it.images.forEach((u,k)=>thumb(mediaEl(u,isVid(u)),isVid(u),()=>{removed.push(u);it.images.splice(k,1);render();}));
@@ -262,7 +276,8 @@ function render(){
     nm.oninput=()=>it.name=nm.value; pr.oninput=()=>it.price=Number(pr.value);
     c.querySelector('input[type=file]').onchange=async e=>{
       const files=[...e.target.files];e.target.value='';
-      for(const f of files){
+      setWorking(1);
+      try{for(const f of files){
         if(total()>=4){alert('Only 4 per item. Extra files were skipped.');break;}
         try{
           if(f.type.startsWith('video/')||isVid(f.name)){
@@ -274,8 +289,8 @@ function render(){
             msg('Preparing photo...');const b=await shrinkImg(f,1200,.82);
             it.pending.push({type:'image',blob:b,preview:URL.createObjectURL(b)});
           }
-        }catch(err){alert(err.message);}
-      }
+        }catch(err){msg('');alert(err.message);}
+      }}finally{setWorking(-1);}
       render();
     };
     c.querySelector('.del').onclick=()=>{if(confirm('Delete '+it.name+'?')){it.images.forEach(u=>removed.push(u));data.items.splice(i,1);render();}};
@@ -285,12 +300,15 @@ function render(){
   add.onclick=()=>{if(data.items.length>=30){alert('Only 30 products at a time. Delete an old one first.');return;}data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
   app.appendChild(add);
   const uc=document.createElement('div');uc.className='card';uc.style.marginTop='14px';
-  uc.innerHTML='<b>Free storage check</b><p class="hint" id="un" style="margin:6px 0 10px">The free Vercel plan has 1 GB of storage. Tap to see how much is used.</p><button type="button" class="photo" id="ub">Check storage</button>';
+  uc.innerHTML='<b>Storage</b><p class="hint" id="un" style="margin:6px 0 10px"></p><button type="button" class="photo" id="ub">Check storage</button>';
   uc.querySelector('#ub').onclick=async()=>{const un=uc.querySelector('#un');un.className='hint';un.textContent='Checking...';
     try{const r=await call({action:'usage'}),mb=r.bytes/1048576,pc=Math.round(mb/1024*100);
       un.textContent=mb.toFixed(0)+' MB of 1024 MB used ('+pc+'%), '+r.count+' files. '+(pc>70?'Getting full. Delete old slides or items.':'All good.');if(pc>70)un.className='hint err';}
     catch(e){un.textContent='Could not check ('+e.message+')';un.className='hint err';}};
   app.appendChild(uc);
+  const film=document.getElementById('film');
+  if(film){const k=focus!=null?film.children[focus]:null;film.scrollLeft=k?Math.max(0,k.offsetLeft-14):fl;}
+  window.scrollTo(0,sy);
 }
 const b64=blob=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(String(f.result).split(',')[1]);f.onerror=rej;f.readAsDataURL(blob);});
 async function up(path,blob,type,onp){
@@ -341,7 +359,7 @@ $('save').onclick=async()=>{
     if(e.status===401||/log in/i.test(e.message)){login('Please enter the password again.');}
     else msg('Could not save ('+e.message+'). Try again.',true);
   }
-  b.disabled=false;
+  b.disabled=working>0;
 };
 call({action:'check'}).then(load).catch(()=>login());
 </script>

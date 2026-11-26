@@ -91,12 +91,13 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 @media (prefers-reduced-motion:reduce){.any .tick{animation:none}}
 .hero{max-width:1000px;margin:6px auto 0}
 .hero[hidden]{display:none}
-.hs{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:10px 16px 6px;scroll-padding-inline:16px;position:relative;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.hs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:10px 14px 6px;scroll-padding-inline:14px;position:relative;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .hs::-webkit-scrollbar{display:none}
 .hs:focus-visible{outline:3px solid var(--gold);outline-offset:-3px;border-radius:18px}
-.hslide{flex:0 0 min(86%,560px);aspect-ratio:16/10;border-radius:18px;overflow:hidden;position:relative;scroll-snap-align:start;background:linear-gradient(135deg,#6b3f1f,#2b1c10);box-shadow:0 8px 22px rgba(60,35,10,.22)}
+.hslide{flex:0 0 min(calc(100% - 32px),680px);aspect-ratio:4/5;border-radius:18px;overflow:hidden;position:relative;scroll-snap-align:start;background:linear-gradient(135deg,#6b3f1f,#2b1c10);box-shadow:0 8px 22px rgba(60,35,10,.22)}
 .hslide img,.hslide video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .hslide .cap{position:absolute;left:0;right:0;bottom:0;padding:36px 16px 14px;color:#fff;font:800 clamp(1.05rem,4.2vw,1.45rem)/1.2 "Baloo 2",system-ui,sans-serif;background:linear-gradient(0deg,rgba(0,0,0,.62),transparent);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+@media (min-width:600px){.hslide{aspect-ratio:16/10}}
 .hdots{display:flex;justify-content:center;gap:6px;padding:8px 0 2px}
 .hdots i{width:7px;height:7px;border-radius:99px;background:var(--line);transition:width .35s ease;overflow:hidden;position:relative;cursor:pointer}
 .hdots i.on{width:28px}
@@ -154,12 +155,12 @@ function addVideo(parent,url,label){
   if(vio)vio.observe(v);else{v.src=url;v.controls=true;}
   return v;
 }
-// Slideshow: swipe cards, auto-advance (4.5 s for photos, video length up to 12 s), pauses on touch/hover/off-screen.
+// Slideshow: swipe cards, auto-advance (4.5 s for photos, video length up to 15 s), pauses on touch/hover/off-screen.
 function heroInit(slides){
   const hero=document.getElementById('hero'),hs=document.getElementById('hs'),dots=document.getElementById('hdots');
   slides=(slides||[]).filter(x=>x&&x.url).slice(0,8);
   if(!slides.length)return;
-  const IMG_MS=4500,VID_MAX=12000,els=[];
+  const IMG_MS=4500,VID_MAX=15000,els=[];
   slides.forEach((sl,i)=>{
     const f=document.createElement('div');f.className='hslide';f.setAttribute('role','group');f.setAttribute('aria-label',(i+1)+' of '+slides.length);
     let m;
@@ -215,7 +216,7 @@ function heroInit(slides){
   };
   const go=i=>{
     lock=Date.now()+800;
-    hs.scrollTo({left:els[i].f.offsetLeft-16,behavior:REDUCE?'auto':'smooth'});
+    hs.scrollTo({left:els[i].f.offsetLeft-14,behavior:REDUCE?'auto':'smooth'});
     activate(i);
   };
   const poke=()=>{
@@ -230,7 +231,7 @@ function heroInit(slides){
     clearTimeout(st);
     st=setTimeout(()=>{
       if(Date.now()<lock)return;
-      let k=0,best=1e9;els.forEach((e,j)=>{const d=Math.abs(e.f.offsetLeft-16-hs.scrollLeft);if(d<best){best=d;k=j;}});
+      let k=0,best=1e9;els.forEach((e,j)=>{const d=Math.abs(e.f.offsetLeft-14-hs.scrollLeft);if(d<best){best=d;k=j;}});
       if(k!==cur)activate(k);
     },110);
   },{passive:true});

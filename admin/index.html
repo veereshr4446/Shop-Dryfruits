@@ -120,11 +120,11 @@ function videoInfo(file){return new Promise(res=>{const v=document.createElement
     c.width=Math.round((v.videoWidth||640)*k);c.height=Math.round((v.videoHeight||360)*k);
     try{c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>fin({duration:d,poster:b}),'image/jpeg',.8);}catch(e){fin({duration:d,poster:null});}};
   setTimeout(()=>fin({duration:v.duration||0,poster:null}),8000);v.src=u;});}
-async function checkVideo(f){
+async function checkVideo(f,maxSec){maxSec=maxSec||20;
   if(f.size>10*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 10 MB.\nTip: send it to yourself on WhatsApp first (it shrinks it), then pick it from there.'};
   const i=await videoInfo(f);
   if(i.bad)return{msg:'This video cannot be read.\nTip: send it to yourself on WhatsApp first, then pick it from there.'};
-  if(i.duration>20.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is 20 seconds. Please trim it.'};
+  if(i.duration>maxSec+.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is '+maxSec+' seconds. Please trim it.'};
   return{ok:true,poster:i.poster};
 }
 function mediaEl(src,vid,poster){
@@ -135,7 +135,7 @@ const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button'
 
 function slidesCard(){
   const c=document.createElement('div');c.className='card';
-  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">Up to 8 slides, 3 videos. Videos: under 10 MB and 20 seconds. Tip: send a video to yourself on WhatsApp first to shrink it.</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" id="sv"></label></div>';
+  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">Up to 8 slides, 3 of them videos. Videos: under 10 MB and 15 seconds. Best look: tall (portrait) photos and videos. Tip: send a video to yourself on WhatsApp first to shrink it.</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" id="sv"></label></div>';
   const list=c.querySelector('.sl'),L=data.slides;
   if(!L.length)list.innerHTML='<p class="hint">No slides yet.</p>';
   L.forEach((sl,i)=>{
@@ -164,7 +164,7 @@ function slidesCard(){
     const f=e.target.files[0];e.target.value='';if(!f)return;
     if(L.length>=8)return alert('Only 8 slides.');
     if(L.filter(x=>x.type==='video').length>=3)return alert('Only 3 video slides. Videos use the most free data. Delete one first.');
-    msg('Checking video...');const r=await checkVideo(f);
+    msg('Checking video...');const r=await checkVideo(f,15);
     if(!r.ok){msg('');return alert(r.msg);}
     L.push({id:'s'+rid(),type:'video',caption:'',blob:f,posterBlob:r.poster,preview:r.poster?URL.createObjectURL(r.poster):''});render();
   };

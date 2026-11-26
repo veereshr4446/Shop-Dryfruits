@@ -58,6 +58,7 @@ input[type=file]{display:none}
 .slot{position:relative;flex:0 0 min(68vw,250px);aspect-ratio:4/5;border-radius:18px;overflow:hidden;scroll-snap-align:start;background:var(--line)}
 .slot .sm,.slot .sm img,.slot .sm video{width:100%;height:100%;object-fit:cover;display:block}
 .slot .sm{display:grid;place-items:center;font-size:3rem}
+.vph{width:100%;height:100%;display:grid;place-items:center;font-size:2rem;background:#3a2a1a;color:#fff}
 .nb{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:.85rem;padding:3px 11px;border-radius:99px}
 .slot .sx{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;padding:0;background:rgba(0,0,0,.65);color:#fff;font-size:1.1rem;line-height:1}
 .slot .mv{position:absolute;top:50%;width:38px;height:38px;margin-top:-19px;border-radius:50%;padding:0;background:rgba(0,0,0,.5);color:#fff;font-size:1rem;line-height:1}
@@ -65,14 +66,11 @@ input[type=file]{display:none}
 .slot .cap{position:absolute;left:8px;right:8px;bottom:8px;width:auto;border:0;border-radius:12px;padding:10px 12px;font-size:.95rem;background:rgba(0,0,0,.55);color:#fff}
 .slot .cap::placeholder{color:rgba(255,255,255,.7)}
 .slot.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:auto;border:3px dashed var(--gold);border-radius:18px;color:var(--ink);cursor:pointer;
-  background:linear-gradient(110deg,transparent 35%,rgba(227,167,47,.16) 50%,transparent 65%) 0 0/250% 100%,var(--card);animation:sheen 2.8s linear infinite}
+  background:var(--card)}
 .slot.empty .pl{width:64px;height:64px;border-radius:50%;background:var(--gold);color:#2a1a00;display:grid;place-items:center;font-size:2.4rem;font-weight:800;line-height:1}
 .slot.empty span.t{font-weight:800;font-size:1.05rem}
 .slot.empty .nb{background:rgba(0,0,0,.45)}
-@keyframes sheen{from{background-position:150% 0,0 0}to{background-position:-100% 0,0 0}}
-@media (prefers-reduced-motion:reduce){.slot.empty{animation:none}}
 </style>
-<script type="module">import {upload} from "https://esm.sh/@vercel/blob@2/client";window.blobUpload=upload;</script>
 <link rel="manifest" href="/admin/manifest.json">
 <meta name="theme-color" content="#4a2a14">
 <link rel="apple-touch-icon" href="/icons/admin-192.png">
@@ -156,11 +154,13 @@ function recVideo(file,prog){return new Promise((res,rej)=>{
       const out=new Blob(chunks,{type:mime.split(';')[0]});
       poster?res({blob:out,poster}):c.toBlob(b=>res({blob:out,poster:b}),'image/jpeg',.8);};
     rec.onerror=()=>fail('Could not shrink this video.');
-    const tick=()=>{
+    let last=0,lastSec=-1;
+    const tick=ts=>{
       if(done)return;
-      draw();
-      if(!poster&&v.currentTime>.4)c.toBlob(b=>{if(b)poster=b;},'image/jpeg',.8);
-      prog&&prog(Math.min(v.currentTime,len),len);
+      const now=ts||performance.now();
+      if(!last||now-last>=30){last=now;draw();
+        if(!poster&&v.currentTime>.4)c.toBlob(b=>{if(b)poster=b;},'image/jpeg',.8);
+        const sec=Math.floor(v.currentTime);if(sec!==lastSec){lastSec=sec;prog&&prog(Math.min(v.currentTime,len),len);}}
       if(v.ended||v.currentTime>=len){if(rec.state!=='inactive')rec.stop();return;}
       requestAnimationFrame(tick);
     };
@@ -187,8 +187,8 @@ async function prepVideo(f){
   }
 }
 function mediaEl(src,vid,poster){
-  if(vid&&!poster){const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.src=src+'#t=0.1';return v;}
-  const im=document.createElement('img');im.src=vid?poster:src;im.alt='';return im;
+  if(vid&&!poster){const d=document.createElement('div');d.className='vph';d.textContent='🎬';return d;} // light placeholder, no video is loaded here
+  const im=document.createElement('img');im.decoding='async';im.loading='lazy';im.src=vid?poster:src;im.alt='';return im;
 }
 const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label',label);x.onclick=fn;return x;};
 
@@ -311,7 +311,7 @@ function render(focus){
 const b64=blob=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(String(f.result).split(',')[1]);f.onerror=rej;f.readAsDataURL(blob);});
 async function up(path,blob,type,onp){
   try{
-    if(!window.blobUpload)throw new Error('Upload tool did not load. Check internet and refresh.');
+    if(!window.blobUpload){try{window.blobUpload=(await import('https://esm.sh/@vercel/blob@2/client')).upload;}catch(e){throw new Error('Upload tool did not load. Check internet and refresh.');}}
     return (await window.blobUpload(path,blob,{access:'public',handleUploadUrl:'/api/upload',contentType:type,onUploadProgress:onp})).url;
   }catch(e){
     // Safety net: photos can still go through the old route if the direct upload fails.

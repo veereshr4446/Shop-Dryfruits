@@ -283,7 +283,7 @@ function render(){
     app.appendChild(c);
   });
   const add=document.createElement('button');add.className='add';add.textContent='+ Add new item';
-  add.onclick=()=>{data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
+  add.onclick=()=>{if(data.items.length>=30){alert('Only 30 products at a time. Delete an old one first.');return;}data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
   app.appendChild(add);
   const uc=document.createElement('div');uc.className='card';uc.style.marginTop='14px';
   uc.innerHTML='<b>Free storage check</b><p class="hint" id="un" style="margin:6px 0 10px">The free Vercel plan has 1 GB of storage. Tap to see how much is used.</p><button type="button" class="photo" id="ub">Check storage</button>';

@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
       const old = await loadSaved();
       if (old && Array.isArray(old.items)) old.items.forEach(o => { prev[o.id] = o; });
       const sig = o => [o.name, o.price, o.unit, (o.images || []).join('|')].join('~');
-      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => {
+      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 30).map(i => {
         const imgs = capVideos((Array.isArray(i.images) ? i.images : (i.image ? [i.image] : [])).filter(isBlobUrl), 1).slice(0, 4);
         const item = {
           id: String(i.id || '').replace(/[^\w-]/g, '').slice(0, 60) || 'i' + Date.now(),

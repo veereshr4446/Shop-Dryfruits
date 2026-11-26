@@ -37,6 +37,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-
 .ct .ic svg{width:15px;height:15px}
 .ct .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0}
 .ct small{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;opacity:.95}
+.ct .chip{align-self:flex-end;margin-top:4px;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45);white-space:nowrap}
+@media (max-width:340px){.ct .chip{font-size:.5rem;padding:2px 5px;letter-spacing:.02em}}
 .ct b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
 .ct:focus-visible,.theme:focus-visible,.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .theme{position:absolute;top:10px;right:12px;width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--cream);font-size:1.15rem;cursor:pointer;display:grid;place-items:center}
@@ -137,15 +139,17 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     const tx=document.createElement('span'); tx.className='tx';
     const sm=document.createElement('small'); sm.textContent=(c.role?c.role+' · ':'')+c.name;
     const n=document.createElement('b'); n.textContent=ph.slice(-10);
-    tx.append(sm,n); a.append(ic,tx); $('contacts').appendChild(a);
+    tx.append(sm,n);
+    if(/seller/i.test(c.role||'')){const ch=document.createElement('span'); ch.className='chip'; ch.textContent='Call anytime for orders'; tx.appendChild(ch);}
+    a.append(ic,tx); $('contacts').appendChild(a);
   });
   if(s.anytime&&String(s.anytime.phone||'').replace(/\D/g,'').length>=10){
     const ap=String(s.anytime.phone).replace(/\D/g,'').slice(-10), a=$('any');
     a.href='tel:+91'+ap; a.hidden=false;
-    a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' anytime on '+ap);
+    a.setAttribute('aria-label','Call '+(s.anytime.name||'us')+' for bills and payments on '+ap);
     const t=document.createElement('span'); t.className='tick'; t.innerHTML=PH; t.setAttribute('aria-hidden','true');
     const tx=document.createElement('span'); tx.className='tx';
-    const sm=document.createElement('small'); ['Owner','Call anytime for orders'].forEach((w,k)=>{if(k){const d=document.createElement('i'); d.className='dot'; sm.appendChild(d);} const c=document.createElement('span'); c.textContent=w; sm.appendChild(c);});
+    const sm=document.createElement('small'); ['Owner','Bills and payments'].forEach((w,k)=>{if(k){const d=document.createElement('i'); d.className='dot'; sm.appendChild(d);} const c=document.createElement('span'); c.textContent=w; sm.appendChild(c);});
     const n=document.createElement('b'); const ok=document.createElement('span'); ok.className='ok'; ok.setAttribute('aria-hidden','true'); ok.innerHTML='<svg viewBox="0 0 24 24"><defs><linearGradient id="okg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b6b"/><stop offset=".6" stop-color="#e11d1d"/><stop offset="1" stop-color="#9b0f0f"/></linearGradient></defs><circle cx="12" cy="12" r="11" fill="url(#okg)"/><path d="M6.5 12.5l3.8 3.8 7.2-8" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; n.append('+91 '+ap.slice(0,5)+' '+ap.slice(5),ok);
     tx.append(sm,n);
     if(s.anytime.name){const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.anytime.name; tx.appendChild(nm);}

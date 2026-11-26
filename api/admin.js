@@ -5,7 +5,7 @@ const { hmac, same, cookieOk } = require('./_auth');
 
 const isBlobUrl = u => { try { return new URL(u).hostname.endsWith('.public.blob.vercel-storage.com'); } catch (e) { return false; } };
 const isVideo = u => /\.(mp4|webm|mov|m4v)(\?|$)/i.test(String(u));
-// Free-tier guard: at most 12 slides (10 videos) and 4 media per item (1 video).
+// Free-tier guard: at most 10 slides (any mix of videos and photos) and 4 media per item (1 video).
 const capVideos = (arr, max) => { let n = 0; return arr.filter(x => { if (!isVideo(x.url || x)) return true; return ++n <= max; }); };
 
 module.exports = async (req, res) => {
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
         return item;
       });
       const slides = Array.isArray(b.slides)
-        ? capVideos(b.slides.filter(x => x && isBlobUrl(x.url)), 10).slice(0, 12).map(x => {
+        ? capVideos(b.slides.filter(x => x && isBlobUrl(x.url)), 10).slice(0, 10).map(x => {
             const o = { id: String(x.id || '').replace(/[^\w-]/g, '').slice(0, 60) || 's' + Date.now(), url: x.url, type: isVideo(x.url) ? 'video' : 'image', caption: String(x.caption || '').slice(0, 60) };
             if (o.type === 'video' && isBlobUrl(x.poster)) o.poster = x.poster;
             return o;

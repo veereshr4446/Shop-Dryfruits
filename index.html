@@ -161,7 +161,7 @@ function addVideo(parent,url,label){
 // Slideshow: swipe cards, auto-advance (4.5 s for photos, video length up to 15 s), pauses on touch/hover/off-screen.
 function heroInit(slides){
   const hero=document.getElementById('hero'),hs=document.getElementById('hs'),dots=document.getElementById('hdots');
-  slides=(slides||[]).filter(x=>x&&x.url).slice(0,12);
+  slides=(slides||[]).filter(x=>x&&x.url).slice(0,10);
   if(!slides.length)return;
   const IMG_MS=5000,VID_MAX=45000,els=[];
   slides.forEach((sl,i)=>{

@@ -189,7 +189,7 @@ const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button'
 
 function slidesCard(){
   const c=document.createElement('div');c.className='card';
-  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">One slide = one video or one photo (for example one company). Up to 12 slides, 10 of them videos. Videos can be up to 45 seconds. Longer ones are cut and every video is shrunk automatically (takes about as long as the video). Best look: tall (portrait).</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" multiple id="sv"></label></div>';
+  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">One slide = one video or one photo (for example one company). Up to 10 slides in total, any mix of videos and photos (all 10 can be videos). Videos can be up to 45 seconds. Longer ones are cut and every video is shrunk automatically (takes about as long as the video). Best look: tall (portrait).</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" multiple id="sv"></label></div>';
   const list=c.querySelector('.sl'),L=data.slides;
   if(!L.length)list.innerHTML='<p class="hint">No slides yet.</p>';
   L.forEach((sl,i)=>{
@@ -208,7 +208,7 @@ function slidesCard(){
   c.querySelector('#si').onchange=async e=>{
     const files=[...e.target.files];e.target.value='';
     for(const f of files){
-      if(L.length>=12){alert('Only 12 slides. Extra images were skipped.');break;}
+      if(L.length>=10){alert('Only 10 slides. Extra images were skipped.');break;}
       try{msg('Preparing image...');const b=await shrinkImg(f,1350,.82);L.push({id:'s'+rid(),type:'image',caption:'',blob:b,preview:URL.createObjectURL(b)});}
       catch(err){alert(err.message);}
     }
@@ -217,8 +217,7 @@ function slidesCard(){
   c.querySelector('#sv').onchange=async e=>{
     const files=[...e.target.files];e.target.value='';
     for(const f of files){
-      if(L.length>=12){alert('Only 12 slides. Extra videos were skipped.');break;}
-      if(L.filter(x=>x.type==='video').length>=10){alert('Only 10 video slides. Videos use the most free data. Delete one first.');break;}
+      if(L.length>=10){alert('Only 10 slides. Extra videos were skipped.');break;}
       msg('Checking video...');const r=await prepVideo(f);
       if(!r.ok){msg('');alert(r.msg);continue;}
       L.push({id:'s'+rid(),type:'video',caption:'',blob:r.blob,posterBlob:r.poster,preview:r.poster?URL.createObjectURL(r.poster):''});

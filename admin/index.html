@@ -52,20 +52,29 @@ input[type=file]{display:none}
 .st{position:relative;flex:none;width:84px;height:84px;border-radius:10px;overflow:hidden;background:#cfc}
 .st img{width:100%;height:100%;object-fit:cover;display:block}
 .st button{position:absolute;top:3px;right:3px;width:30px;height:30px;border-radius:50%;padding:0;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;line-height:1}
+.st video{width:100%;height:100%;object-fit:cover;display:block}
+.vb{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:99px}
+.sr{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.sr .st{width:92px;height:64px}
+.sr input[type=text]{padding:8px 10px;font-size:.95rem}
+.mini{padding:6px 10px;font-size:1rem;background:var(--line);color:var(--ink);border-radius:8px}
+.mini:disabled{opacity:.35}
+.ctl{display:flex;flex-direction:column;gap:6px;flex:none}
 </style>
+<script type="module">import {upload} from "https://esm.sh/@vercel/blob@2/client";window.blobUpload=upload;</script>
 <link rel="manifest" href="/admin/manifest.json">
 <meta name="theme-color" content="#4a2a14">
 <link rel="apple-touch-icon" href="/icons/admin-192.png">
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register("/sw.js");</script>
 </head>
 <body>
-<header>Update prices and photos</header>
+<header>Update prices, photos and videos</header>
 <main id="app"></main>
 <div class="bar" id="bar" hidden><p class="msg" id="msg"></p><button class="save" id="save">Save changes</button></div>
 <div class="done" id="done" role="status" aria-live="polite">
   <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/><path class="tick" d="M28 52 L44 67 L73 35"/></svg>
   <h2>Done</h2>
-  <p>Prices and photos updated</p>
+  <p>Prices, photos and videos updated</p>
   <p class="t" id="dtime"></p>
   <div class="btns"><a href="/" target="_blank" rel="noopener">View website</a><button id="dok">OK</button></div>
 </div>
@@ -89,13 +98,83 @@ function login(note){
 }
 async function load(){
   app.innerHTML='<p>Loading...</p>';
-  try{data=await (await fetch('/api/products?t='+Date.now())).json();removed=[];render();}
+  try{data=await (await fetch('/api/products?t='+Date.now())).json();data.slides=data.slides||[];removed=[];render();}
   catch(e){app.innerHTML='<p class="err">Could not load. Check internet and refresh.</p>';}
 }
+const isVid=u=>/\.(mp4|webm|mov|m4v)(\?|$)/i.test(String(u));
+const MB=n=>(n/1048576).toFixed(1), rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const extOf=t=>t==='video/webm'?'.webm':t==='video/quicktime'?'.mov':'.mp4';
+function shrinkImg(file,max){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+  im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('Could not read that photo'));};
+  im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    const g=c.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+    c.toBlob(b=>{if(b&&b.size>3e6)return c.toBlob(b2=>res(b2||b),'image/jpeg',.8);res(b);},'image/jpeg',.88);};
+  im.src=u;});}
+// Reads length and grabs one still frame (used as the slide's cover picture).
+function videoInfo(file){return new Promise(res=>{const v=document.createElement('video'),u=URL.createObjectURL(file);let done=false;
+  const fin=o=>{if(done)return;done=true;URL.revokeObjectURL(u);res(o);};
+  v.muted=true;v.playsInline=true;v.preload='metadata';
+  v.onerror=()=>fin({duration:0,poster:null,bad:true});
+  v.onloadedmetadata=()=>{try{v.currentTime=Math.min(.3,(v.duration||0)/2);}catch(e){}};
+  v.onseeked=()=>{const d=v.duration,k=Math.min(1,1000/Math.max(v.videoWidth||1,v.videoHeight||1)),c=document.createElement('canvas');
+    c.width=Math.round((v.videoWidth||640)*k);c.height=Math.round((v.videoHeight||360)*k);
+    try{c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>fin({duration:d,poster:b}),'image/jpeg',.8);}catch(e){fin({duration:d,poster:null});}};
+  setTimeout(()=>fin({duration:v.duration||0,poster:null}),8000);v.src=u;});}
+async function checkVideo(f){
+  if(f.size>10*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 10 MB.\nTip: send it to yourself on WhatsApp first (it shrinks it), then pick it from there.'};
+  const i=await videoInfo(f);
+  if(i.bad)return{msg:'This video cannot be read.\nTip: send it to yourself on WhatsApp first, then pick it from there.'};
+  if(i.duration>20.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is 20 seconds. Please trim it.'};
+  return{ok:true,poster:i.poster};
+}
+function mediaEl(src,vid,poster){
+  if(vid&&!poster){const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.src=src+'#t=0.1';return v;}
+  const im=document.createElement('img');im.src=vid?poster:src;im.alt='';return im;
+}
+const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label',label);x.onclick=fn;return x;};
+
+function slidesCard(){
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">Up to 8 slides, 3 videos. Videos: under 10 MB and 20 seconds. Tip: send a video to yourself on WhatsApp first to shrink it.</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" id="sv"></label></div>';
+  const list=c.querySelector('.sl'),L=data.slides;
+  if(!L.length)list.innerHTML='<p class="hint">No slides yet.</p>';
+  L.forEach((sl,i)=>{
+    const r=document.createElement('div');r.className='sr';
+    const t=document.createElement('div');t.className='st';
+    const vid=sl.type==='video';
+    t.appendChild(sl.blob?(sl.preview?mediaEl(sl.preview,false):document.createTextNode('🎬')):mediaEl(sl.url,vid,sl.poster));
+    if(vid){const vb=document.createElement('span');vb.className='vb';vb.textContent='▶ Video';t.appendChild(vb);}
+    const cap=document.createElement('input');cap.type='text';cap.maxLength=60;cap.placeholder='Caption (optional)';cap.value=sl.caption||'';cap.setAttribute('aria-label','Caption');cap.oninput=()=>sl.caption=cap.value;
+    const ctl=document.createElement('div');ctl.className='ctl';
+    const mk=(txt,lab,dis,fn)=>{const b=document.createElement('button');b.type='button';b.className='mini';b.textContent=txt;b.setAttribute('aria-label',lab);b.disabled=dis;b.onclick=fn;return b;};
+    const mv=d=>()=>{const j=i+d;[L[i],L[j]]=[L[j],L[i]];render();};
+    ctl.append(mk('◀','Move earlier',i===0,mv(-1)),mk('▶','Move later',i===L.length-1,mv(1)),mk('✕','Delete slide',false,()=>{if(!confirm('Delete this slide?'))return;if(sl.url)removed.push(sl.url);if(sl.poster)removed.push(sl.poster);L.splice(i,1);render();}));
+    r.append(t,cap,ctl);list.appendChild(r);
+  });
+  c.querySelector('#si').onchange=async e=>{
+    const files=[...e.target.files];e.target.value='';
+    for(const f of files){
+      if(L.length>=8){alert('Only 8 slides. Extra images were skipped.');break;}
+      try{msg('Preparing image...');const b=await shrinkImg(f,1600);L.push({id:'s'+rid(),type:'image',caption:'',blob:b,preview:URL.createObjectURL(b)});}
+      catch(err){alert(err.message);}
+    }
+    render();
+  };
+  c.querySelector('#sv').onchange=async e=>{
+    const f=e.target.files[0];e.target.value='';if(!f)return;
+    if(L.length>=8)return alert('Only 8 slides.');
+    if(L.filter(x=>x.type==='video').length>=3)return alert('Only 3 video slides. Videos use the most free data. Delete one first.');
+    msg('Checking video...');const r=await checkVideo(f);
+    if(!r.ok){msg('');return alert(r.msg);}
+    L.push({id:'s'+rid(),type:'video',caption:'',blob:f,posterBlob:r.poster,preview:r.poster?URL.createObjectURL(r.poster):''});render();
+  };
+  return c;
+}
+
 function render(){
   $('bar').hidden=false; msg('');
   app.innerHTML='';
-  data.shop=data.shop||{};
+  data.shop=data.shop||{};data.slides=data.slides||[];
   const sc=document.createElement('div');sc.className='card';
   sc.innerHTML='<label style="margin-top:0" for="sn">Shop heading</label><input id="sn" type="text" maxlength="80"><label for="st">Small line under heading</label><input id="st" type="text" maxlength="120"><label for="sw">WhatsApp number for orders (10 digits)</label><input id="sw" type="tel" inputmode="numeric" maxlength="15">';
   const sn=sc.querySelector('#sn'),st=sc.querySelector('#st');
@@ -105,27 +184,42 @@ function render(){
   sw.oninput=()=>data.shop.whatsapp=sw.value;
   sn.oninput=()=>data.shop.name=sn.value;st.oninput=()=>data.shop.tagline=st.value;
   app.appendChild(sc);
+  app.appendChild(slidesCard());
   data.items.forEach((it,i)=>{
     it.images=it.images||(it.image?[it.image]:[]);it.pending=it.pending||[];
     const total=()=>it.images.length+it.pending.length;
+    const nvid=()=>it.images.filter(isVid).length+it.pending.filter(p=>p.type==='video').length;
     const c=document.createElement('div');c.className='card';
     const left=it.ts?Math.max(1,Math.ceil((it.ts+6048e5-Date.now())/864e5)):7;
     c.innerHTML=`<p style="margin:0 0 8px;font-size:.85rem;opacity:.75">⏳ Auto-removes in ${left} day${left>1?'s':''}. Change price or photos and save to keep it 7 more days.</p><label style="margin-top:0">Name</label><input type="text">
+    <label>Photos and videos (${total()} of 6)</label><div class="strip"></div>
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
-    <label>Photos (${total()} of 6)</label><div class="strip"></div>
-    <div class="row" style="margin-top:12px;justify-content:space-between"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos<input type="file" accept="image/*" multiple></label><button class="del">Delete item</button></div>`;
+    <div class="row" style="margin-top:12px;justify-content:space-between;flex-wrap:wrap"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos / videos<input type="file" accept="image/*,video/*" multiple></label><button class="del">Delete item</button></div>
+    <p class="hint" style="margin:8px 0 0">Videos: 2 per item, under 10 MB, 20 seconds.</p>`;
     const strip=c.querySelector('.strip');
-    const thumb=(src,onx)=>{const t=document.createElement('div');t.className='st';const im=document.createElement('img');im.src=src;im.alt='';const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove photo');x.onclick=onx;t.append(im,x);strip.appendChild(t);};
-    it.images.forEach((u,k)=>thumb(u,()=>{removed.push(u);it.images.splice(k,1);render();}));
-    it.pending.forEach((u,k)=>thumb(u,()=>{it.pending.splice(k,1);render();}));
+    const thumb=(el,vid,onx)=>{const t=document.createElement('div');t.className='st';t.appendChild(el);if(vid){const vb=document.createElement('span');vb.className='vb';vb.textContent='▶ Video';t.appendChild(vb);}t.appendChild(xbtn('Remove',onx));strip.appendChild(t);};
+    it.images.forEach((u,k)=>thumb(mediaEl(u,isVid(u)),isVid(u),()=>{removed.push(u);it.images.splice(k,1);render();}));
+    it.pending.forEach((pd,k)=>thumb(pd.preview?mediaEl(pd.preview,false):document.createTextNode('🎬'),pd.type==='video',()=>{it.pending.splice(k,1);render();}));
     if(!total()){strip.className='strip none';strip.textContent='🍇 No photos yet';}
     const [nm,pr]=c.querySelectorAll('input[type=text],input[type=number]');
     nm.value=it.name;pr.value=it.price;
     nm.oninput=()=>it.name=nm.value; pr.oninput=()=>it.price=Number(pr.value);
     c.querySelector('input[type=file]').onchange=async e=>{
-      const room=6-total(),files=[...e.target.files];
-      if(files.length>room)alert('Only 6 photos per item. Extra photos were skipped.');
-      for(const f of files.slice(0,Math.max(room,0)))it.pending.push(await shrink(f));
+      const files=[...e.target.files];e.target.value='';
+      for(const f of files){
+        if(total()>=6){alert('Only 6 per item. Extra files were skipped.');break;}
+        try{
+          if(f.type.startsWith('video/')||isVid(f.name)){
+            if(nvid()>=2){alert('Only 2 videos per item.');continue;}
+            msg('Checking video...');const r=await checkVideo(f);
+            if(!r.ok){alert(r.msg);continue;}
+            it.pending.push({type:'video',blob:f,preview:r.poster?URL.createObjectURL(r.poster):''});
+          }else{
+            msg('Preparing photo...');const b=await shrinkImg(f,2000);
+            it.pending.push({type:'image',blob:b,preview:URL.createObjectURL(b)});
+          }
+        }catch(err){alert(err.message);}
+      }
       render();
     };
     c.querySelector('.del').onclick=()=>{if(confirm('Delete '+it.name+'?')){it.images.forEach(u=>removed.push(u));data.items.splice(i,1);render();}};
@@ -134,8 +228,27 @@ function render(){
   const add=document.createElement('button');add.className='add';add.textContent='+ Add new item';
   add.onclick=()=>{data.items.push({id:'i'+Date.now(),name:'Kishmish',price:0,unit:'kg',images:[],pending:[]});render();window.scrollTo(0,document.body.scrollHeight)};
   app.appendChild(add);
+  const uc=document.createElement('div');uc.className='card';uc.style.marginTop='14px';
+  uc.innerHTML='<b>Free storage check</b><p class="hint" id="un" style="margin:6px 0 10px">The free Vercel plan has 1 GB of storage. Tap to see how much is used.</p><button type="button" class="photo" id="ub">Check storage</button>';
+  uc.querySelector('#ub').onclick=async()=>{const un=uc.querySelector('#un');un.className='hint';un.textContent='Checking...';
+    try{const r=await call({action:'usage'}),mb=r.bytes/1048576,pc=Math.round(mb/1024*100);
+      un.textContent=mb.toFixed(0)+' MB of 1024 MB used ('+pc+'%), '+r.count+' files. '+(pc>70?'Getting full. Delete old slides or items.':'All good.');if(pc>70)un.className='hint err';}
+    catch(e){un.textContent='Could not check ('+e.message+')';un.className='hint err';}};
+  app.appendChild(uc);
 }
-function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const m=2000,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const g=c.getContext("2d");g.imageSmoothingQuality="high";g.drawImage(im,0,0,c.width,c.height);let d=c.toDataURL("image/jpeg",.88);if(d.length>3300000)d=c.toDataURL("image/jpeg",.82);res(d);URL.revokeObjectURL(u);};im.src=u;});}
+const b64=blob=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(String(f.result).split(',')[1]);f.onerror=rej;f.readAsDataURL(blob);});
+async function up(path,blob,type,onp){
+  try{
+    if(!window.blobUpload)throw new Error('Upload tool did not load. Check internet and refresh.');
+    return (await window.blobUpload(path,blob,{access:'public',handleUploadUrl:'/api/upload',contentType:type,onUploadProgress:onp})).url;
+  }catch(e){
+    // Safety net: photos can still go through the old route if the direct upload fails.
+    if(type==='image/jpeg'&&blob.size<3200000&&!/log in/i.test(e.message)){
+      return (await call({action:'image',name:path.split('/').pop(),content:await b64(blob)})).url;
+    }
+    throw e;
+  }
+}
 function showDone(){
   $('dtime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
   $('done').classList.add('show');
@@ -144,21 +257,32 @@ function showDone(){
 }
 $('dok').onclick=()=>{$('done').classList.remove('show');window.scrollTo(0,0);};
 $('save').onclick=async()=>{
-  const b=$('save');b.disabled=true;msg('Saving... please wait');
+  const b=$('save');b.disabled=true;
+  const total=data.slides.reduce((n,x)=>n+(x.blob?1:0)+(x.posterBlob?1:0),0)+data.items.reduce((n,it)=>n+(it.pending||[]).length,0);
+  let n=0;
+  const prog=l=>p=>msg('Uploading '+n+' of '+total+(p&&p.percentage<100?' ('+Math.round(p.percentage)+'%)':'')+' '+l);
+  msg(total?'Uploading... please wait':'Saving... please wait');
   try{
-    for(const it of data.items){
-      let k=0;
-      for(const du of (it.pending||[])){
-        const name=it.id.replace(/[^\w-]/g,'')+'-'+Date.now()+'-'+(k++)+'.jpg';
-        const r=await call({action:'image',name,content:du.split(',')[1]});
-        it.images.push(r.url);
-      }
-      it.pending=[];
+    for(const sl of data.slides){
+      if(sl.blob){n++;const vid=sl.type==='video';
+        sl.url=await up('slides/'+sl.id+(vid?extOf(sl.blob.type):'.jpg'),sl.blob,vid?(sl.blob.type||'video/mp4'):'image/jpeg',prog('(slide)'));
+        delete sl.blob;}
+      if(sl.posterBlob){n++;sl.poster=await up('slides/'+sl.id+'-p.jpg',sl.posterBlob,'image/jpeg',prog('(slide)'));delete sl.posterBlob;}
+      delete sl.preview;
     }
-    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline,whatsapp:(data.shop||{}).whatsapp},items:data.items.map(({id,name,price,unit,images})=>({id,name,price,unit,images})),removed});
+    for(const it of data.items){
+      while(it.pending&&it.pending.length){
+        const pd=it.pending[0],vid=pd.type==='video';n++;
+        const path=(vid?'videos/':'images/')+String(it.id).replace(/[^\w-]/g,'').slice(0,20)+'-'+rid()+(vid?extOf(pd.blob.type):'.jpg');
+        it.images.push(await up(path,pd.blob,vid?(pd.blob.type||'video/mp4'):'image/jpeg',prog('')));
+        it.pending.shift();
+      }
+    }
+    msg('Saving... please wait');
+    await call({action:'save',shop:{name:(data.shop||{}).name,tagline:(data.shop||{}).tagline,whatsapp:(data.shop||{}).whatsapp},slides:data.slides.map(({id,url,type,caption,poster})=>({id,url,type,caption,poster})),items:data.items.map(({id,name,price,unit,images})=>({id,name,price,unit,images})),removed});
     removed=[];render();msg('Saved! The website is updated.');showDone();
   }catch(e){
-    if(e.status===401){login('Please enter the password again.');}
+    if(e.status===401||/log in/i.test(e.message)){login('Please enter the password again.');}
     else msg('Could not save ('+e.message+'). Try again.',true);
   }
   b.disabled=false;

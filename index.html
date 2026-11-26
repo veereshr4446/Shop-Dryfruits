@@ -37,7 +37,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-
 .ct .ic svg{width:15px;height:15px}
 .ct .tx{display:flex;flex-direction:column;line-height:1.15;min-width:0}
 .ct small{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;opacity:.95}
-.ct .chip{align-self:flex-end;margin-top:4px;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45);white-space:nowrap}
+.ct .chip{align-self:flex-end;margin-bottom:4px;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:#3a2400;font-weight:800;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#f6d66b,var(--gold) 60%,#c98f12);box-shadow:0 0 10px rgba(242,193,78,.45);white-space:nowrap}
 @media (max-width:340px){.ct .chip{font-size:.5rem;padding:2px 5px;letter-spacing:.02em}}
 .ct b{font-size:clamp(.95rem,4.3vw,1.1rem);font-weight:800;letter-spacing:.4px;font-variant-numeric:tabular-nums;color:#fff}
 .ct:focus-visible,.theme:focus-visible,.order:focus-visible,.fab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
@@ -269,8 +269,8 @@ function heroInit(slides){
     const tx=document.createElement('span'); tx.className='tx';
     const sm=document.createElement('small'); sm.textContent=(c.role?c.role+' · ':'')+c.name;
     const n=document.createElement('b'); n.textContent=ph.slice(-10);
-    tx.append(sm,n);
     if(/seller/i.test(c.role||'')){const ch=document.createElement('span'); ch.className='chip'; ch.textContent='Call anytime for orders'; tx.appendChild(ch);}
+    tx.append(sm,n);
     a.append(ic,tx); $('contacts').appendChild(a);
   });
   if(s.anytime&&String(s.anytime.phone||'').replace(/\D/g,'').length>=10){

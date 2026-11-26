@@ -92,6 +92,23 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
 .any:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(225,29,29,.65)}70%{box-shadow:0 0 0 9px rgba(225,29,29,0)}100%{box-shadow:0 0 0 0 rgba(225,29,29,0)}}
 @media (prefers-reduced-motion:reduce){.any .tick{animation:none}}
+.hero{max-width:1000px;margin:6px auto 0}
+.hero[hidden]{display:none}
+.hs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:10px 14px 6px;scroll-padding-inline:14px;position:relative;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.hs::-webkit-scrollbar{display:none}
+.hs:focus-visible{outline:3px solid var(--gold);outline-offset:-3px;border-radius:18px}
+.hslide{flex:0 0 min(calc(100% - 32px),680px);aspect-ratio:4/5;border-radius:18px;overflow:hidden;position:relative;scroll-snap-align:start;background:linear-gradient(135deg,#6b3f1f,#2b1c10);box-shadow:0 8px 22px rgba(60,35,10,.22)}
+.hslide img,.hslide video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hslide .cap{position:absolute;left:0;right:0;bottom:0;padding:36px 16px 14px;color:#fff;font:800 clamp(1.05rem,4.2vw,1.45rem)/1.2 "Baloo 2",system-ui,sans-serif;background:linear-gradient(0deg,rgba(0,0,0,.62),transparent);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+@media (min-width:600px){.hslide{aspect-ratio:16/10}}
+.hdots{display:flex;justify-content:center;gap:6px;padding:8px 0 2px}
+.hdots i{width:7px;height:7px;border-radius:99px;background:var(--line);transition:width .35s ease;overflow:hidden;position:relative;cursor:pointer}
+.hdots i.on{width:28px}
+.hdots i.on::after{content:"";position:absolute;inset:0;background:var(--price);transform-origin:left;transform:scaleX(0);animation:hfill var(--d,4.5s) linear forwards}
+.hdots.paused i.on::after{animation-play-state:paused}
+@keyframes hfill{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.hdots i.on::after{animation:none;transform:scaleX(1)}}
+.slides video{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center;display:block;background:#2b1c10}
 </style>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#4a2a14">
@@ -110,6 +127,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
   <p class="tag" id="tag"></p>
   <span class="upd" id="upd" hidden></span>
 </div>
+<section class="hero" id="hero" hidden aria-label="Highlights" aria-roledescription="carousel"><div class="hs" id="hs" tabindex="0"></div><div class="hdots" id="hdots" aria-hidden="true"></div></section>
 <main>
   <div class="grid" id="grid" aria-live="polite"></div>
 </main>
@@ -121,12 +139,125 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
   b.onclick=()=>{r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('theme',r.dataset.theme)}catch(e){}paint();};
   paint();
 })();
+const SAVE=!!(navigator.connection&&navigator.connection.saveData), REDUCE=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const isVid=u=>/\.(mp4|webm|mov|m4v)(\?|$)/i.test(String(u));
+// Product videos: load only when mostly on screen, play muted, pause when scrolled away (saves data).
+const vio='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(en=>{
+  const v=en.target;
+  if(en.isIntersecting&&en.intersectionRatio>=.6){
+    if(!v.src){v.preload='metadata';v.src=v.dataset.src;}
+    if(SAVE||REDUCE){v.controls=true;return;}
+    const p=v.play();if(p&&p.catch)p.catch(()=>{});
+  }else v.pause();
+}),{threshold:[0,.6]}):null;
+function addVideo(parent,url,label){
+  const v=document.createElement('video');
+  v.muted=true;v.defaultMuted=true;v.playsInline=true;v.loop=true;v.preload='none';
+  v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('aria-label',label);
+  v.dataset.src=url;parent.appendChild(v);
+  if(vio)vio.observe(v);else{v.src=url;v.controls=true;}
+  return v;
+}
+// Slideshow: swipe cards, auto-advance (4.5 s for photos, video length up to 15 s), pauses on touch/hover/off-screen.
+function heroInit(slides){
+  const hero=document.getElementById('hero'),hs=document.getElementById('hs'),dots=document.getElementById('hdots');
+  slides=(slides||[]).filter(x=>x&&x.url).slice(0,10);
+  if(!slides.length)return;
+  const IMG_MS=5000,VID_MAX=45000,els=[];
+  slides.forEach((sl,i)=>{
+    const f=document.createElement('div');f.className='hslide';f.setAttribute('role','group');f.setAttribute('aria-label',(i+1)+' of '+slides.length);
+    let m;
+    if(sl.type==='video'||isVid(sl.url)){
+      m=document.createElement('video');m.muted=true;m.defaultMuted=true;m.playsInline=true;m.loop=false;m.preload='none';
+      m.setAttribute('muted','');m.setAttribute('playsinline','');m.setAttribute('aria-label',sl.caption||'Video');
+      if(sl.poster)m.poster=sl.poster;
+      f.appendChild(m);els.push({f,m,v:true,src:sl.url});
+    }else{
+      m=document.createElement('img');m.alt=sl.caption||'';m.decoding='async';m.loading=i<2?'eager':'lazy';m.src=sl.url;
+      f.appendChild(m);els.push({f,m,v:false});
+    }
+    if(sl.caption){const c=document.createElement('div');c.className='cap';c.textContent=sl.caption;f.appendChild(c);}
+    hs.appendChild(f);
+    const d=document.createElement('i');d.onclick=()=>{go(i);poke();};dots.appendChild(d);
+  });
+  hero.hidden=false;
+  const dl=[...dots.children];
+  let cur=0,timer=null,hold=false,idleT=null,visible=false,lock=0;
+  const clear=()=>{clearTimeout(timer);timer=null;};
+  const auto=()=>els.length>1&&!REDUCE&&visible&&!document.hidden&&!hold;
+  const pauseVids=()=>els.forEach(e=>{if(e.v)e.m.pause();});
+  const setDot=(i,ms)=>{
+    dl.forEach(d=>d.classList.remove('on'));void dots.offsetWidth;
+    dl[i].style.setProperty('--d',ms+'ms');dl[i].classList.add('on');
+  };
+  const next=()=>{if(auto())go((cur+1)%els.length);};
+  const runVideo=i=>{
+    const e=els[i],v=e.m;let done=false;
+    const fin=()=>{if(done)return;done=true;if(cur===i)next();};
+    if(SAVE||REDUCE){setDot(i,IMG_MS);timer=setTimeout(fin,IMG_MS);return;} // data saver: poster only
+    const start=()=>{
+      if(cur!==i)return;
+      const ms=Math.min(v.duration&&isFinite(v.duration)?v.duration*1000:45000,VID_MAX);
+      setDot(i,ms);
+      try{v.currentTime=0;}catch(_){}
+      const p=v.play();if(p&&p.catch)p.catch(()=>{});
+      timer=setTimeout(fin,ms+400);
+    };
+    v.onended=fin;
+    if(!v.src){v.preload='auto';v.src=e.src;}
+    if(v.readyState>=1)start();
+    else{
+      v.addEventListener('loadedmetadata',start,{once:true});
+      v.addEventListener('error',()=>{if(cur===i){setDot(i,IMG_MS);timer=setTimeout(fin,IMG_MS);}},{once:true});
+      v.load();
+    }
+  };
+  const warm=i=>{const nx=els[(i+1)%els.length];if(nx&&nx.v&&!nx.m.src&&!SAVE&&!REDUCE){nx.m.preload='auto';nx.m.src=nx.src;}}; // get the next clip ready so it starts at once
+  const activate=i=>{
+    clear();cur=i;pauseVids();warm(i);
+    if(els[i].v)runVideo(i);
+    else{setDot(i,IMG_MS);if(auto())timer=setTimeout(next,IMG_MS);}
+  };
+  const go=i=>{
+    lock=Date.now()+800;
+    hs.scrollTo({left:els[i].f.offsetLeft-14,behavior:REDUCE?'auto':'smooth'});
+    activate(i);
+  };
+  const poke=()=>{
+    hold=true;clear();dots.classList.add('paused');clearTimeout(idleT);
+    idleT=setTimeout(()=>{hold=false;dots.classList.remove('paused');if(visible)activate(cur);},5000);
+  };
+  ['touchstart','pointerdown','wheel','keydown','focusin'].forEach(n=>hs.addEventListener(n,poke,{passive:true}));
+  hs.addEventListener('mouseenter',()=>{hold=true;clear();dots.classList.add('paused');clearTimeout(idleT);});
+  hs.addEventListener('mouseleave',()=>{clearTimeout(idleT);idleT=setTimeout(()=>{hold=false;dots.classList.remove('paused');if(visible)activate(cur);},1200);});
+  let st=null;
+  hs.addEventListener('scroll',()=>{
+    clearTimeout(st);
+    st=setTimeout(()=>{
+      if(Date.now()<lock)return;
+      let k=0,best=1e9;els.forEach((e,j)=>{const d=Math.abs(e.f.offsetLeft-14-hs.scrollLeft);if(d<best){best=d;k=j;}});
+      if(k!==cur)activate(k);
+    },110);
+  },{passive:true});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){clear();pauseVids();}
+    else if(!hold&&visible)activate(cur);
+  });
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(es=>{
+      visible=es[0].isIntersecting;
+      if(!visible){clear();pauseVids();}
+      else if(!hold)activate(cur);
+    },{threshold:.35}).observe(hero);
+  }else{visible=true;activate(0);}
+}
 (async()=>{
   const $=id=>document.getElementById(id);
   let d;
-  try{ try{ d=await (await fetch('/api/products?t='+Date.now())).json(); if(!d.items) throw 0; }catch(_){ d=await (await fetch('products.json?t='+Date.now())).json(); } }
+  try{ try{ d=await (await fetch('/api/products')).json(); if(!d.items) throw 0; }catch(_){ d=await (await fetch('products.json?t='+Date.now())).json(); } }
   catch(e){ $('grid').innerHTML='<p class="msg">Prices will be here soon.</p>'; return; }
   const s=d.shop||{};
+  try{heroInit(d.slides);}catch(e){}
   $('shop').textContent=s.name||'Kissan Cold Storage'; document.title=s.name||'Kissan Cold Storage';
   $('tag').textContent=s.tagline||'';
   if(d.updated){ $('upd').hidden=false; $('upd').textContent='Prices updated '+d.updated; }
@@ -171,7 +302,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 100px}
     if(!imgs.length){ ph.classList.add('empty'); ph.textContent='🍇'; }
     else{
       const sl=document.createElement('div'); sl.className='slides';
-      imgs.forEach((u,k)=>{const im=document.createElement('img'); im.src=u; im.alt=it.name+(imgs.length>1?' photo '+(k+1):''); im.loading='lazy'; sl.appendChild(im);});
+      imgs.forEach((u,k)=>{if(isVid(u)){addVideo(sl,u,it.name+' video');return;} const im=document.createElement('img'); im.src=u; im.alt=it.name+(imgs.length>1?' photo '+(k+1):''); im.loading='lazy'; sl.appendChild(im);});
       ph.appendChild(sl);
       if(imgs.length>1){
         const dots=document.createElement('div'); dots.className='dots';

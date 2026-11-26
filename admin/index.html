@@ -120,8 +120,8 @@ function videoInfo(file){return new Promise(res=>{const v=document.createElement
     c.width=Math.round((v.videoWidth||640)*k);c.height=Math.round((v.videoHeight||360)*k);
     try{c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>fin({duration:d,poster:b}),'image/jpeg',.8);}catch(e){fin({duration:d,poster:null});}};
   setTimeout(()=>fin({duration:v.duration||0,poster:null}),8000);v.src=u;});}
-// Makes any phone video fit the free plan: first 10 seconds, tall 4:5, no sound, about 1 MB. Runs inside the browser in real time.
-const VMAX=10;
+// Makes any phone video fit the free plan: first 45 seconds, tall 4:5, no sound, about 0.5 MB per 10 seconds. Runs inside the browser in real time.
+const VMAX=45;
 function recVideo(file,prog){return new Promise((res,rej)=>{
   const W=540,H=675,u=URL.createObjectURL(file),v=document.createElement('video');
   const mime=window.MediaRecorder&&['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
@@ -138,7 +138,7 @@ function recVideo(file,prog){return new Promise((res,rej)=>{
   };
   v.onloadeddata=()=>{
     const len=Math.min(VMAX,isFinite(v.duration)&&v.duration>0?v.duration:VMAX);
-    try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:800000});}catch(e){return fail('NOREC');}
+    try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:650000});}catch(e){return fail('NOREC');}
     rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
     rec.onstop=()=>{if(done)return;done=true;clearTimeout(guard);v.pause();URL.revokeObjectURL(u);
       const out=new Blob(chunks,{type:mime.split(';')[0]});
@@ -154,23 +154,23 @@ function recVideo(file,prog){return new Promise((res,rej)=>{
     };
     v.play().then(()=>{rec.start(500);tick();}).catch(()=>fail('Could not play this video to shrink it.'));
   };
-  guard=setTimeout(()=>fail('Took too long. Try a shorter video.'),90000);
+  guard=setTimeout(()=>fail('Took too long. Try a shorter video.'),150000);
 });}
 // Checks a picked video, shrinks it when needed. Returns {ok,blob,poster} or {msg}.
 async function prepVideo(f){
   if(f.size>400*1048576)return{msg:'That video is '+MB(f.size)+' MB, too big. Pick a shorter one.'};
   const i=await videoInfo(f);
   if(i.bad)return{msg:'This video cannot be read.\nTip: send it to yourself on WhatsApp first, then pick it from there.'};
-  if(i.duration<=VMAX+.5&&f.size<=2.5*1048576)return{ok:true,blob:f,poster:i.poster}; // already short and small
+  if(i.duration<=VMAX+.5&&f.size<=4*1048576)return{ok:true,blob:f,poster:i.poster}; // already short and small
   try{
     const r=await recVideo(f,(t,l)=>msg('Shrinking video... '+Math.floor(t)+' of '+Math.floor(l)+' s. Keep this page open.'));
-    if(r.blob.size>4*1048576)return{msg:'Still '+MB(r.blob.size)+' MB after shrinking. Please pick a simpler or shorter video.'};
+    if(r.blob.size>6*1048576)return{msg:'Still '+MB(r.blob.size)+' MB after shrinking. Please pick a simpler or shorter video.'};
     return{ok:true,blob:r.blob,poster:r.poster||i.poster};
   }catch(e){
     if(e.message!=='NOREC')return{msg:e.message};
     // Older browser that cannot shrink: only accept videos that already fit.
-    if(i.duration>VMAX+.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is 10 seconds. Please trim it, or open this page in Chrome to trim automatically.'};
-    if(f.size>4*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 4 MB. Send it to yourself on WhatsApp first to shrink it.'};
+    if(i.duration>VMAX+.5)return{msg:'That video is '+Math.round(i.duration)+' seconds. Maximum is 45 seconds. Please trim it, or open this page in Chrome to trim automatically.'};
+    if(f.size>6*1048576)return{msg:'That video is '+MB(f.size)+' MB. Maximum is 6 MB. Send it to yourself on WhatsApp first to shrink it.'};
     return{ok:true,blob:f,poster:i.poster};
   }
 }
@@ -189,7 +189,7 @@ const xbtn=(label,fn)=>{const x=document.createElement('button');x.type='button'
 
 function slidesCard(){
   const c=document.createElement('div');c.className='card';
-  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">One slide = one video or one photo (for example one company). Up to 12 slides, 10 of them videos. Videos are cut to 10 seconds and shrunk automatically (takes about as long as the video). Best look: tall (portrait).</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" multiple id="sv"></label></div>';
+  c.innerHTML='<b>Slideshow</b> <span class="hint">(moves by itself, above the products)</span><p class="hint" style="margin:6px 0 10px">One slide = one video or one photo (for example one company). Up to 12 slides, 10 of them videos. Videos can be up to 45 seconds. Longer ones are cut and every video is shrunk automatically (takes about as long as the video). Best look: tall (portrait).</p><div class="sl"></div><div class="row" style="margin-top:8px"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add image<input type="file" accept="image/*" multiple id="si"></label><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add video<input type="file" accept="video/*" multiple id="sv"></label></div>';
   const list=c.querySelector('.sl'),L=data.slides;
   if(!L.length)list.innerHTML='<p class="hint">No slides yet.</p>';
   L.forEach((sl,i)=>{
@@ -252,7 +252,7 @@ function render(){
     <label>Photos and videos (${total()} of 6)</label><div class="strip"></div>
     <label>Price per ${it.unit||'kg'}</label><div class="price"><span>₹</span><input type="number" inputmode="decimal" min="0"></div>
     <div class="row" style="margin-top:12px;justify-content:space-between;flex-wrap:wrap"><label class="photo" style="margin:0;border-radius:12px;cursor:pointer">+ Add photos / videos<input type="file" accept="image/*,video/*" multiple></label><button class="del">Delete item</button></div>
-    <p class="hint" style="margin:8px 0 0">Up to 4 files per item, only 1 of them a video (cut to 10 seconds and shrunk automatically).</p>`;
+    <p class="hint" style="margin:8px 0 0">Up to 4 files per item, only 1 of them a video (up to 45 seconds, shrunk automatically).</p>`;
     const strip=c.querySelector('.strip');
     const thumb=(el,vid,onx)=>{const t=document.createElement('div');t.className='st';t.appendChild(el);if(vid){const vb=document.createElement('span');vb.className='vb';vb.textContent='▶ Video';t.appendChild(vb);}t.appendChild(xbtn('Remove',onx));strip.appendChild(t);};
     it.images.forEach((u,k)=>thumb(mediaEl(u,isVid(u)),isVid(u),()=>{removed.push(u);it.images.splice(k,1);render();}));

@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
         const video = /\.(mp4|webm|mov)$/i.test(pathname);
         return {
           allowedContentTypes: TYPES,
-          maximumSizeInBytes: video ? 5 * MB : 2 * MB, // keeps the free 1 GB storage and 10 GB/month downloads safe
+          maximumSizeInBytes: video ? 8 * MB : 2 * MB, // keeps the free 1 GB storage and 10 GB/month downloads safe
           addRandomSuffix: false,
           allowOverwrite: false,
           cacheControlMaxAge: 60 * 60 * 24 * 30 // browsers and the CDN keep it a month, so repeat visits cost nothing
